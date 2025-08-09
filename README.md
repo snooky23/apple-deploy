@@ -80,7 +80,7 @@ cd ios-deploy-platform
 # Create your secure team directory
 mkdir -p /path/to/secure/apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
-# Place your API key
+# Place your API key (will be auto-detected)
 mv ~/Downloads/AuthKey_XXXXX.p8 /path/to/secure/apple_info/YOUR_TEAM_ID/
 ```
 
@@ -91,12 +91,11 @@ mv ~/Downloads/AuthKey_XXXXX.p8 /path/to/secure/apple_info/YOUR_TEAM_ID/
 cd /path/to/your-ios-app
 
 # 🚀 One-command deployment (production-verified)
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
+ios-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure/apple_info" \
   app_identifier="com.yourcompany.app" \
   apple_id="your@email.com" \
-  api_key_path="AuthKey_XXXXX.p8" \
   api_key_id="YOUR_KEY_ID" \
   api_issuer_id="your-issuer-uuid" \
   app_name="Your App" \
@@ -171,7 +170,6 @@ team_id="YOUR_TEAM_ID"                   # Apple Developer Team ID (10-character
 apple_info_dir="/path/to/secure/apple_info"  # Apple credentials base directory (absolute path)
 app_identifier="com.yourcompany.app"     # Bundle identifier (reverse DNS format)
 apple_id="your@email.com"               # Apple Developer account email
-api_key_path="AuthKey_XXXXX.p8"         # API key filename (auto-detected in apple_info_dir/team_id/)
 api_key_id="YOUR_KEY_ID"                # App Store Connect API Key ID (10-character)
 api_issuer_id="your-issuer-uuid"        # API Issuer ID (UUID format)
 app_name="Your App Name"                # Display name for TestFlight
@@ -183,6 +181,10 @@ scheme="YourScheme"                     # Xcode build scheme name
 These parameters have sensible defaults but can be customized:
 
 ```bash
+# API Key (auto-detected if not specified)
+api_key_path="AuthKey_XXXXX.p8"        # API key filename (auto-detected in apple_info_dir/team_id/)
+                                       # If multiple keys exist, uses the most recently modified
+
 # Version Management
 version_bump="patch"                    # Version increment: major|minor|patch|auto|sync (default: patch)
 
@@ -297,18 +299,17 @@ my_app/
 git clone your-team-ios-project && cd your-app
 
 # 2. Auto-import team certificates (team structure already exists)
-../ios-deploy-platform/scripts/deploy.sh setup_certificates \
+ios-deploy setup_certificates \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/your/secure_apple_info" \
   app_identifier="com.yourteamapp"
 
 # 3. Deploy immediately - it just works!
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
+ios-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/your/secure_apple_info" \
   app_identifier="com.yourteamapp" \
   apple_id="your@email.com" \
-  api_key_path="AuthKey_XXXXX.p8" \
   api_key_id="YOUR_KEY_ID" \
   api_issuer_id="your-issuer-uuid" \
   app_name="Your App" \
@@ -322,11 +323,15 @@ git clone your-team-ios-project && cd your-app
 mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
 # 2. Create and export team certificates
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
+ios-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure_apple_info" \
   app_identifier="com.yourteamapp" \
-  [... other parameters ...]
+  apple_id="your@email.com" \
+  api_key_id="YOUR_KEY_ID" \
+  api_issuer_id="your-issuer-uuid" \
+  app_name="Your Team App" \
+  scheme="YourScheme"
 
 # 3. Share certificates with team (secure team directories)
 # Team members use the same apple_info_dir path
@@ -340,26 +345,13 @@ mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
 ```bash
 # Local versioning with TestFlight conflict prevention
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  version_bump="patch" \    # 1.0.0 → 1.0.1
-  team_id="YOUR_TEAM_ID" [...]
-
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  version_bump="minor" \    # 1.0.0 → 1.1.0
-  team_id="YOUR_TEAM_ID" [...]
-
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  version_bump="major" \    # 1.0.0 → 2.0.0
-  team_id="YOUR_TEAM_ID" [...]
+ios-deploy deploy version_bump="patch" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.0.1
+ios-deploy deploy version_bump="minor" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.1.0  
+ios-deploy deploy version_bump="major" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 2.0.0
 
 # Advanced App Store integration
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  version_bump="auto" \     # Smart conflict resolution
-  team_id="YOUR_TEAM_ID" [...]
-
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  version_bump="sync" \     # Sync with App Store + patch
-  team_id="YOUR_TEAM_ID" [...]
+ios-deploy deploy version_bump="auto" team_id="YOUR_TEAM_ID" [...]     # Smart conflict resolution
+ios-deploy deploy version_bump="sync" team_id="YOUR_TEAM_ID" [...]     # Sync with App Store + patch
 ```
 
 ### Key Benefits
@@ -376,18 +368,13 @@ mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
 ```bash
 # Standard upload (fast) - 3-5 minutes total
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  team_id="YOUR_TEAM_ID" [...]
+ios-deploy deploy team_id="YOUR_TEAM_ID" [...]
 
 # Enhanced mode - wait for Apple processing completion  
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
-  testflight_enhanced="true" \
-  team_id="YOUR_TEAM_ID" [...]
+ios-deploy deploy testflight_enhanced="true" team_id="YOUR_TEAM_ID" [...]
 
 # Check TestFlight status anytime
-../ios-deploy-platform/scripts/deploy.sh check_testflight_status_standalone \
-  team_id="YOUR_TEAM_ID" \
-  app_identifier="com.yourapp" [...]
+ios-deploy status team_id="YOUR_TEAM_ID" app_identifier="com.yourapp" [...]
 ```
 
 ### Enhanced Mode Features
@@ -414,6 +401,35 @@ mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
 ### Command Usage Examples
 
+#### Using Homebrew (Recommended)
+
+```bash
+# Complete TestFlight deployment
+ios-deploy deploy \
+  team_id="NA5574MSN5" \
+  apple_info_dir="/path/to/secure_apple_info" \
+  app_identifier="com.myapp" \
+  apple_id="dev@email.com" \
+  api_key_id="ABC123" \
+  api_issuer_id="12345678-1234-1234-1234-123456789012" \
+  app_name="My App" \
+  scheme="MyApp"
+
+# Certificate setup and validation
+ios-deploy setup_certificates \
+  team_id="NA5574MSN5" \
+  apple_info_dir="/path/to/secure_apple_info" \
+  app_identifier="com.myapp"
+
+# System status check  
+ios-deploy status \
+  team_id="NA5574MSN5" \
+  apple_info_dir="/path/to/secure_apple_info" \
+  app_identifier="com.myapp"
+```
+
+#### Direct Script Usage (Alternative)
+
 ```bash
 # Complete TestFlight deployment
 ./scripts/deploy.sh build_and_upload \
@@ -421,7 +437,6 @@ mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
   apple_info_dir="/path/to/secure_apple_info" \
   app_identifier="com.myapp" \
   apple_id="dev@email.com" \
-  api_key_path="AuthKey_ABC123.p8" \
   api_key_id="ABC123" \
   api_issuer_id="12345678-1234-1234-1234-123456789012" \
   app_name="My App" \
@@ -703,14 +718,17 @@ cat build/logs/deployment_*.log
 ✅ **Production-verified with successful TestFlight uploads**
 
 ```bash
-git clone https://github.com/yourusername/ios-deploy-platform.git
+# Install via Homebrew
+brew tap yourusername/ios-tools
+brew install ios-deploy-platform
+
+# Navigate to your project and deploy
 cd /path/to/your-ios-app
-../ios-deploy-platform/scripts/deploy.sh build_and_upload \
+ios-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure_apple_info" \
   app_identifier="com.yourapp" \
   apple_id="your@email.com" \
-  api_key_path="AuthKey_XXXXX.p8" \
   api_key_id="YOUR_KEY_ID" \
   api_issuer_id="your-issuer-uuid" \
   app_name="Your App" \
