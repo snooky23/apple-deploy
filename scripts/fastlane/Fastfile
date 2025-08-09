@@ -179,6 +179,36 @@ platform :ios do
         UI.success("✅ Provisioning profiles creation/validation completed via clean architecture use case")
         UI.message("📱 Development profiles: #{profiles_result.development_profiles_count}")
         UI.message("📱 Distribution profiles: #{profiles_result.distribution_profiles_count}")
+        
+        # Install provisioning profiles to system location for Xcode
+        UI.header("📱 Installing Provisioning Profiles to System Location")
+        system_profiles_dir = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+        FileUtils.mkdir_p(system_profiles_dir) unless File.directory?(system_profiles_dir)
+        
+        if File.directory?(profiles_dir)
+          profile_files = Dir.glob("#{profiles_dir}/*.mobileprovision")
+          installed_count = 0
+          
+          profile_files.each do |profile_file|
+            destination = File.join(system_profiles_dir, File.basename(profile_file))
+            begin
+              FileUtils.copy_file(profile_file, destination)
+              UI.message("📱 Installed profile: #{File.basename(profile_file)}")
+              installed_count += 1
+            rescue => e
+              UI.error("❌ Failed to install profile #{File.basename(profile_file)}: #{e.message}")
+            end
+          end
+          
+          if installed_count > 0
+            UI.success("✅ Installed #{installed_count} provisioning profile(s) to system location")
+            UI.message("📁 System profiles directory: #{system_profiles_dir}")
+          else
+            UI.important("⚠️ No profiles found to install - profiles may be created automatically by Xcode")
+          end
+        else
+          UI.important("⚠️ Profiles directory not found: #{profiles_dir}")
+        end
       else
         UI.error("❌ Provisioning profiles creation failed: #{profiles_result.error}")
         UI.message("💡 #{profiles_result.recovery_suggestion}")
