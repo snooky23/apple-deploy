@@ -1,0 +1,83 @@
+require_relative '../scripts/fastlane/modules/core/logger'
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Create certificates and provisioning profiles from scratch"
+  lane :create_all do
+    # Set up App Store Connect API authentication
+    app_store_connect_api_key(
+      key_id: "ZLDUP533YR",
+      issuer_id: "63cb40ec-3fb4-4e64-b8f9-1b10996adce6",
+      key_filepath: "./certificates/AuthKey_ZLDUP533YR.p8"
+    )
+    
+    FastlaneLogger.step("Creating Development Certificate")
+    begin
+      cert(
+        development: true,
+        output_path: "./certificates/",
+        team_id: "NA5574MSN5"
+      )
+      FastlaneLogger.success("Development certificate created")
+    rescue => e
+      FastlaneLogger.warn("Development certificate: #{e.message}")
+    end
+    
+    FastlaneLogger.step("Creating Distribution Certificate")
+    begin
+      cert(
+        development: false,
+        output_path: "./certificates/",
+        team_id: "NA5574MSN5"
+      )
+      FastlaneLogger.success("Distribution certificate created")
+    rescue => e
+      FastlaneLogger.warn("Distribution certificate: #{e.message}")
+    end
+    
+    FastlaneLogger.step("Creating Development Provisioning Profile")
+    begin
+      sigh(
+        app_identifier: "com.voiceforms",
+        development: true,
+        output_path: "./profiles/",
+        team_id: "NA5574MSN5",
+        force: true,
+        skip_install: false
+      )
+      FastlaneLogger.success("Development provisioning profile created")
+    rescue => e
+      FastlaneLogger.warn("Development profile: #{e.message}")
+    end
+    
+    FastlaneLogger.step("Creating Distribution Provisioning Profile")
+    begin
+      sigh(
+        app_identifier: "com.voiceforms",
+        development: false,
+        output_path: "./profiles/",
+        team_id: "NA5574MSN5",
+        force: true,
+        skip_install: false
+      )
+      FastlaneLogger.success("Distribution provisioning profile created")
+    rescue => e
+      FastlaneLogger.warn("Distribution profile: #{e.message}")
+    end
+    
+    FastlaneLogger.info("Checking created files...")
+    
+    certificates = Dir.glob("./certificates/*.{cer,p12}")
+    FastlaneLogger.info("Certificates:", metadata: { count: certificates.size })
+    certificates.each do |file|
+      FastlaneLogger.info("  - #{File.basename(file)}")
+    end
+    
+    profiles = Dir.glob("./profiles/*.mobileprovision")
+    FastlaneLogger.info("Profiles:", metadata: { count: profiles.size })
+    profiles.each do |file|
+      FastlaneLogger.info("  - #{File.basename(file)}")
+    end
+  end
+end

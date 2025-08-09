@@ -54,3 +54,31 @@ build-iPhoneSimulator/
 
 # Used by RuboCop. Remote config files pulled in from inherit_from directive.
 # .rubocop-https?--*
+
+# iOS Certificates and Provisioning Profiles (sensitive data)
+certificates/*
+profiles/*
+!certificates/.gitkeep
+!profiles/.gitkeep
+
+# Configuration files with sensitive credentials
+certificates/config.env
+
+# Local development artifacts and auto-generated files
+.claude/settings.local.json
+app/fastlane/Fastfile
+app/fastlane/report.xml
+
+# Backup files and temporary files
+*.backup
+*_backup
+*.bak
+config.env.backup*
+certificates/config.env.backup*
+*.tmp
+*.temp
+.DS_Store
+
+# Deployment logs (can be large and sensitive)
+deployment_*.log
+fastlane_*.log
