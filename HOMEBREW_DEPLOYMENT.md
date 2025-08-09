@@ -6,7 +6,7 @@
 
 ```bash
 # Create the repository on GitHub
-gh repo create snooky23/homebrew-ios-tools --public --clone
+gh repo create snooky23/homebrew-tools --public --clone
 cd homebrew-ios-tools
 
 # Create the required directory structure
@@ -31,7 +31,7 @@ git push origin main
 
 ```bash
 # Add your tap locally
-brew tap snooky23/ios-tools
+brew tap snooky23/tools
 
 # Install the platform
 brew install ios-deploy-platform
@@ -62,7 +62,7 @@ ruby --version
 ### Users can now install with:
 
 ```bash
-brew tap snooky23/ios-tools
+brew tap snooky23/tools
 brew install ios-deploy-platform
 ```
 
@@ -89,7 +89,7 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 - **Man Page**: Complete documentation accessible with `man ios-deploy`
 
 ### ✅ **Project Structure**
-- **Tap Repository**: Ready for `snooky23/homebrew-ios-tools`
+- **Tap Repository**: Ready for `snooky23/homebrew-tools`
 - **Formula Directory**: `Formula/ios-deploy-platform.rb`
 - **Documentation**: README with installation and usage instructions
 
