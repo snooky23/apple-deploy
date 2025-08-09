@@ -1,0 +1,21 @@
+# iOS Publishing Automation Platform - Configuration File Example
+# Copy this file and customize with your values
+
+# Required Parameters - REPLACE WITH YOUR VALUES
+APP_IDENTIFIER=com.yourcompany.yourapp
+APPLE_ID=your.email@example.com
+TEAM_ID=YOUR_TEAM_ID_HERE
+API_KEY_PATH=../certificates/AuthKey_YOUR_KEY_ID.p8
+API_KEY_ID=YOUR_KEY_ID_HERE
+API_ISSUER_ID=your-issuer-id-uuid-here
+
+# Optional Parameters
+APP_NAME="Your App Name"
+SCHEME=YourAppScheme
+CONFIGURATION=Release
+P12_PASSWORD=YourSecurePassword123!
+
+# Usage:
+# 1. Copy this file: cp config_example.txt config.env
+# 2. Edit config.env with your actual project values
+# 3. Run: ./scripts/deploy.sh build_and_upload
