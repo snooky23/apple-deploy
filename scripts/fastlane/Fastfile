@@ -238,6 +238,19 @@ platform :ios do
         UI.message("📁 Created build directory: #{build_dir}")
       end
       
+      # Configure Xcode project team via FastLane (not automatic signing)
+      UI.message("🔧 Configuring Xcode project team via FastLane...")
+      begin
+        update_project_team(
+          path: "./#{scheme}.xcodeproj",
+          teamid: team_id
+        )
+        UI.success("✅ Team configured in Xcode project: #{team_id}")
+      rescue => e
+        UI.message("⚠️  Could not update project team via update_project_team: #{e.message}")
+        UI.message("💡 This is expected for some project configurations - using xcargs fallback")
+      end
+      
       # Build and archive the application with automatic team ID assignment
       build_app(
         scheme: scheme,
@@ -246,7 +259,7 @@ platform :ios do
         archive_path: "./build/#{scheme}_#{version}_#{build_number}.xcarchive",
         export_method: "app-store",
         export_team_id: team_id,
-        xcargs: "DEVELOPMENT_TEAM=#{team_id} -allowProvisioningUpdates",
+        xcargs: "DEVELOPMENT_TEAM=#{team_id}",
         export_options: {
           method: "app-store",
           uploadBitcode: false,
