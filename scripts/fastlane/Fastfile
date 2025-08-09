@@ -104,6 +104,10 @@ platform :ios do
       key_filepath: api_key_path
     }
     
+    # Track overall deployment success
+    deployment_success = false
+    deployment_phases = []
+    
     begin
       # Get environment variables for directories
       certificates_dir = ENV['FL_CERTIFICATES_DIR']
@@ -197,6 +201,7 @@ platform :ios do
               installed_count += 1
             rescue => e
               UI.error("❌ Failed to install profile #{File.basename(profile_file)}: #{e.message}")
+              raise "Profile installation failed: #{e.message}"
             end
           end
           
@@ -344,6 +349,9 @@ platform :ios do
         UI.message("📱 Upload completed for: #{File.basename(ipa_path)}")
       end
       
+      # Mark deployment as successful only if we reach this point
+      deployment_success = true
+      
     rescue => upload_error
       UI.error("❌ TestFlight upload failed")
       UI.error("🔍 Error: #{upload_error.message}")
@@ -369,7 +377,8 @@ platform :ios do
         UI.error("🔍 altool error: #{upload_error.message}")
         UI.error("🔍 transporter error: #{transporter_error.message}")
         
-        UI.message("📋 DEPLOYMENT STATUS SUMMARY:")
+        UI.error("💥 DEPLOYMENT FAILED - TestFlight upload unsuccessful")
+        UI.message("📋 FAILURE SUMMARY:")
         UI.message("   ✅ Temporary keychain system: WORKING")
         UI.message("   ✅ Certificate management: WORKING") 
         UI.message("   ✅ Provisioning profiles: WORKING")
@@ -377,13 +386,15 @@ platform :ios do
         UI.message("   ✅ IPA generation: WORKING")
         UI.message("   ❌ TestFlight upload: FAILED (both altool and transporter)")
         UI.message("")
-        UI.message("💡 SOLUTION: The deployment pipeline is production-ready except for TestFlight upload.")
-        UI.message("   Manual upload options:")
+        UI.message("💡 MANUAL UPLOAD REQUIRED:")
         UI.message("   1. Use Xcode Organizer to upload: #{ipa_path}")
         UI.message("   2. Check API key permissions in App Store Connect")
         UI.message("   3. Verify network connectivity and firewall settings")
         UI.message("")
         UI.message("🎯 IPA READY FOR MANUAL UPLOAD: #{ipa_path}")
+        
+        # Re-raise the error to ensure script fails
+        raise "TestFlight upload failed with both altool and transporter"
       end
     end
     
@@ -393,8 +404,28 @@ platform :ios do
       cleanup_success = setup_keychain_use_case.cleanup_keychain(temp_keychain_path)
       
       unless cleanup_success
-        UI.message("⚠️  Keychain cleanup encountered issues but deployment completed successfully")
+        if deployment_success
+          UI.message("⚠️  Keychain cleanup encountered issues but deployment completed successfully")
+        else
+          UI.message("⚠️  Keychain cleanup encountered issues - deployment failed")
+        end
       end
+    end
+    
+    # Final deployment status message
+    if deployment_success
+      UI.success("🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!")
+      UI.message("✅ All phases completed successfully:")
+      UI.message("   ✅ Certificate management")
+      UI.message("   ✅ Provisioning profiles (with system installation)")
+      UI.message("   ✅ iOS app build and archive")
+      UI.message("   ✅ TestFlight upload and verification")
+    else
+      UI.error("💥 DEPLOYMENT FAILED!")
+      UI.message("❌ One or more deployment phases failed")
+      UI.message("📋 Check the error messages above for details")
+      # Ensure the script exits with failure status
+      exit 1
     end
   end
   
