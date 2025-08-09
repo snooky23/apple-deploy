@@ -63,8 +63,11 @@ brew install ruby@3.2
 ### Step 1: Clone & Setup (30 seconds)
 
 ```bash
-git clone https://github.com/yourusername/ios-deploy-platform.git
+git clone https://github.com/snooky23/ios-deploy-platform.git
 cd ios-deploy-platform
+
+# Install Ruby dependencies
+bundle install
 ```
 
 ### Step 2: Get Apple Credentials (2 minutes)
@@ -91,7 +94,7 @@ mv ~/Downloads/AuthKey_XXXXX.p8 /path/to/secure/apple_info/YOUR_TEAM_ID/
 cd /path/to/your-ios-app
 
 # 🚀 One-command deployment (production-verified)
-ios-deploy deploy \
+../ios-deploy-platform/scripts/deploy.sh build_and_upload \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure/apple_info" \
   app_identifier="com.yourcompany.app" \
@@ -113,49 +116,60 @@ ios-deploy deploy \
 
 ---
 
-## 📦 Homebrew Installation
+## 📦 Installation
 
-### Install via Homebrew (Recommended)
+### Current Installation (Clone & Use)
 
 ```bash
-# Add the tap
-brew tap yourusername/ios-tools
+# Clone the repository
+git clone https://github.com/snooky23/ios-deploy-platform.git
+cd ios-deploy-platform
 
-# Install the platform  
-brew install ios-deploy-platform
+# Install Ruby dependencies
+bundle install
 
-# Quick project setup
+# Ready to use - navigate to your iOS project
 cd /path/to/your-ios-app
+```
+
+### 🚧 Homebrew Installation (Coming Soon)
+
+We're working on Homebrew distribution! Once available:
+
+```bash
+# This will work once submitted to Homebrew
+brew tap yourusername/ios-tools
+brew install ios-deploy-platform
 ios-deploy init
 ```
 
-### Using Homebrew Formula
+### Current Usage
 
-The platform includes a complete Homebrew formula with:
+For now, use the direct script commands:
+
+```bash
+# Complete TestFlight deployment
+./scripts/deploy.sh build_and_upload \
+  team_id="YOUR_TEAM_ID" \
+  apple_info_dir="/path/to/secure_apple_info" \
+  app_identifier="com.yourapp" [...]
+
+# Certificate setup
+./scripts/deploy.sh setup_certificates \
+  team_id="YOUR_TEAM_ID" [...]
+
+# System status check
+./scripts/deploy.sh status \
+  team_id="YOUR_TEAM_ID" [...]
+```
+
+### Future Homebrew Features
+
+Once submitted to Homebrew, it will include:
 - **CLI Wrapper**: `ios-deploy` command with project validation
 - **Automatic Dependencies**: Ruby gems, FastLane, and system tools
 - **Configuration Management**: Global and project-specific settings
-- **Man Page Documentation**: `man ios-deploy` for complete usage guide
-
-#### Homebrew Command Reference
-
-```bash
-# Primary deployment
-ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
-
-# Project initialization  
-ios-deploy init
-
-# System status check
-ios-deploy status
-
-# Certificate management
-ios-deploy setup_certificates team_id="YOUR_TEAM_ID" [...]
-
-# Help and documentation
-ios-deploy help
-ios-deploy version
-```
+- **Man Page Documentation**: Complete usage guide
 
 ---
 
@@ -295,17 +309,18 @@ my_app/
 ### New Team Member Setup (5 minutes)
 
 ```bash
-# 1. Clone your team's iOS project
+# 1. Clone the iOS deploy platform and your team's project
+git clone https://github.com/snooky23/ios-deploy-platform.git
 git clone your-team-ios-project && cd your-app
 
 # 2. Auto-import team certificates (team structure already exists)
-ios-deploy setup_certificates \
+../ios-deploy-platform/scripts/deploy.sh setup_certificates \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/your/secure_apple_info" \
   app_identifier="com.yourteamapp"
 
 # 3. Deploy immediately - it just works!
-ios-deploy deploy \
+../ios-deploy-platform/scripts/deploy.sh build_and_upload \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/your/secure_apple_info" \
   app_identifier="com.yourteamapp" \
@@ -323,7 +338,7 @@ ios-deploy deploy \
 mkdir -p /path/to/secure_apple_info/YOUR_TEAM_ID/{certificates,profiles}
 
 # 2. Create and export team certificates
-ios-deploy deploy \
+../ios-deploy-platform/scripts/deploy.sh build_and_upload \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure_apple_info" \
   app_identifier="com.yourteamapp" \
@@ -345,13 +360,13 @@ ios-deploy deploy \
 
 ```bash
 # Local versioning with TestFlight conflict prevention
-ios-deploy deploy version_bump="patch" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.0.1
-ios-deploy deploy version_bump="minor" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.1.0  
-ios-deploy deploy version_bump="major" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 2.0.0
+../ios-deploy-platform/scripts/deploy.sh build_and_upload version_bump="patch" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.0.1
+../ios-deploy-platform/scripts/deploy.sh build_and_upload version_bump="minor" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 1.1.0  
+../ios-deploy-platform/scripts/deploy.sh build_and_upload version_bump="major" team_id="YOUR_TEAM_ID" [...]    # 1.0.0 → 2.0.0
 
 # Advanced App Store integration
-ios-deploy deploy version_bump="auto" team_id="YOUR_TEAM_ID" [...]     # Smart conflict resolution
-ios-deploy deploy version_bump="sync" team_id="YOUR_TEAM_ID" [...]     # Sync with App Store + patch
+../ios-deploy-platform/scripts/deploy.sh build_and_upload version_bump="auto" team_id="YOUR_TEAM_ID" [...]     # Smart conflict resolution
+../ios-deploy-platform/scripts/deploy.sh build_and_upload version_bump="sync" team_id="YOUR_TEAM_ID" [...]     # Sync with App Store + patch
 ```
 
 ### Key Benefits
@@ -368,13 +383,13 @@ ios-deploy deploy version_bump="sync" team_id="YOUR_TEAM_ID" [...]     # Sync wi
 
 ```bash
 # Standard upload (fast) - 3-5 minutes total
-ios-deploy deploy team_id="YOUR_TEAM_ID" [...]
+../ios-deploy-platform/scripts/deploy.sh build_and_upload team_id="YOUR_TEAM_ID" [...]
 
 # Enhanced mode - wait for Apple processing completion  
-ios-deploy deploy testflight_enhanced="true" team_id="YOUR_TEAM_ID" [...]
+../ios-deploy-platform/scripts/deploy.sh build_and_upload testflight_enhanced="true" team_id="YOUR_TEAM_ID" [...]
 
 # Check TestFlight status anytime
-ios-deploy status team_id="YOUR_TEAM_ID" app_identifier="com.yourapp" [...]
+../ios-deploy-platform/scripts/deploy.sh status team_id="YOUR_TEAM_ID" app_identifier="com.yourapp" [...]
 ```
 
 ### Enhanced Mode Features
@@ -401,34 +416,7 @@ ios-deploy status team_id="YOUR_TEAM_ID" app_identifier="com.yourapp" [...]
 
 ### Command Usage Examples
 
-#### Using Homebrew (Recommended)
-
-```bash
-# Complete TestFlight deployment
-ios-deploy deploy \
-  team_id="NA5574MSN5" \
-  apple_info_dir="/path/to/secure_apple_info" \
-  app_identifier="com.myapp" \
-  apple_id="dev@email.com" \
-  api_key_id="ABC123" \
-  api_issuer_id="12345678-1234-1234-1234-123456789012" \
-  app_name="My App" \
-  scheme="MyApp"
-
-# Certificate setup and validation
-ios-deploy setup_certificates \
-  team_id="NA5574MSN5" \
-  apple_info_dir="/path/to/secure_apple_info" \
-  app_identifier="com.myapp"
-
-# System status check  
-ios-deploy status \
-  team_id="NA5574MSN5" \
-  apple_info_dir="/path/to/secure_apple_info" \
-  app_identifier="com.myapp"
-```
-
-#### Direct Script Usage (Alternative)
+#### Current Usage (Direct Scripts)
 
 ```bash
 # Complete TestFlight deployment
@@ -718,13 +706,12 @@ cat build/logs/deployment_*.log
 ✅ **Production-verified with successful TestFlight uploads**
 
 ```bash
-# Install via Homebrew
-brew tap yourusername/ios-tools
-brew install ios-deploy-platform
+# Clone and use the platform
+git clone https://github.com/snooky23/ios-deploy-platform.git
 
 # Navigate to your project and deploy
 cd /path/to/your-ios-app
-ios-deploy deploy \
+../ios-deploy-platform/scripts/deploy.sh build_and_upload \
   team_id="YOUR_TEAM_ID" \
   apple_info_dir="/path/to/secure_apple_info" \
   app_identifier="com.yourapp" \
