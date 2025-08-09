@@ -1,21 +1,17 @@
 class IosDeployPlatform < Formula
-  desc "Enterprise-grade iOS TestFlight automation platform with intelligent certificate management"
+  desc "Enterprise-grade iOS TestFlight automation with intelligent certificate management"
   homepage "https://github.com/snooky23/ios-deploy-platform"
   url "https://github.com/snooky23/ios-deploy-platform/archive/refs/tags/v2.3.0.tar.gz"
-  sha256 "d0fae043fd57b322bc1f8372c6abb5a6581d29f29240c0bfa44d0973af5eb45e"
   license "MIT"
   version "2.3.0"
+  sha256 "d0fae043fd57b322bc1f8372c6abb5a6581d29f29240c0bfa44d0973af5eb45e"
 
   # Dependencies
-  depends_on "ruby@3.2"
-  depends_on "fastlane"
-  
-  # macOS-specific dependencies (iOS development is macOS-only)
-  depends_on :macos
-  
-  # Optional but recommended dependencies
-  depends_on "xcode-install" => :optional
   depends_on "cocoapods" => :optional
+  depends_on "fastlane"
+  depends_on :macos
+  depends_on "ruby@3.2"
+  depends_on "xcode-install" => :optional
 
   # Ruby gem dependencies will be handled via bundler
   resource "bundler" do
@@ -115,17 +111,17 @@ class IosDeployPlatform < Formula
           team_id="XXXXXXXXXX"                 Apple Developer Team ID
           app_identifier="com.company.app"     Bundle identifier  
           apple_id="dev@email.com"             Apple Developer email
-          api_key_path="AuthKey_XXX.p8"        API key filename
           api_key_id="YOUR_KEY_ID"             App Store Connect API Key ID
           api_issuer_id="your-issuer-uuid"     API Issuer ID
           app_name="Your App"                  Display name
           scheme="YourScheme"                  Xcode scheme
       
       OPTIONAL PARAMETERS:
+          api_key_path="AuthKey_XXX.p8"               API key filename (auto-detected)
+          apple_info_dir="/custom/path"               Apple info base directory
           version_bump="patch|minor|major|auto|sync"  Version increment strategy
           testflight_enhanced="true|false"           Enhanced TestFlight confirmation
           p12_password="password"                     P12 certificate password
-          apple_info_dir="/custom/path"               Custom apple_info location
       
       EXAMPLES:
           # Initialize a new project
@@ -136,7 +132,6 @@ class IosDeployPlatform < Formula
               team_id="NA5574MSN5" \\
               app_identifier="com.myapp" \\
               apple_id="dev@email.com" \\
-              api_key_path="AuthKey_ABC123.p8" \\
               api_key_id="ABC123" \\
               api_issuer_id="12345678-1234-1234-1234-123456789012" \\
               app_name="My App" \\
@@ -186,7 +181,7 @@ class IosDeployPlatform < Formula
       2. Edit apple_info/config.env with your team details
       
       3. Run your first deployment:
-         ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" ...
+         ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
       
       EOF
       }
@@ -295,10 +290,6 @@ class IosDeployPlatform < Formula
       Apple Developer account email
       
       .TP
-      .BI api_key_path= PATH
-      App Store Connect API key filename (e.g., "AuthKey_ABC123.p8")
-      
-      .TP
       .BI api_key_id= KEY_ID
       App Store Connect API Key ID
       
@@ -316,6 +307,14 @@ class IosDeployPlatform < Formula
       
       .SH OPTIONAL OPTIONS
       .TP
+      .BI api_key_path= PATH
+      API key filename (auto-detected if not specified)
+      
+      .TP
+      .BI apple_info_dir= PATH
+      Custom path to apple_info directory
+      
+      .TP
       .BI version_bump= STRATEGY
       Version increment strategy: patch, minor, major, auto, or sync
       
@@ -326,10 +325,6 @@ class IosDeployPlatform < Formula
       .TP
       .BI p12_password= PASSWORD
       Password for P12 certificate files
-      
-      .TP
-      .BI apple_info_dir= PATH
-      Custom path to apple_info directory
       
       .SH FILES
       .TP
@@ -356,7 +351,7 @@ class IosDeployPlatform < Formula
       
       Deploy to TestFlight:
       .RS
-      ios-deploy deploy team_id="NA5574MSN5" app_identifier="com.myapp" apple_id="dev@email.com" api_key_path="AuthKey_ABC123.p8" api_key_id="ABC123" api_issuer_id="12345678-1234-1234-1234-123456789012" app_name="My App" scheme="MyApp"
+      ios-deploy deploy team_id="NA5574MSN5" app_identifier="com.myapp" apple_id="dev@email.com" api_key_id="ABC123" api_issuer_id="12345678-1234-1234-1234-123456789012" app_name="My App" scheme="MyApp"
       .RE
       
       Deploy with enhanced TestFlight monitoring:
