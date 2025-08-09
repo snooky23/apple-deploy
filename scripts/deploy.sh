@@ -1655,9 +1655,6 @@ update_config_env_password() {
     
     if [ -f "$config_file" ]; then
         echo "📝 Updating config.env with correct P12 password..."
-        # Create backup in backups directory
-        mkdir -p "$TEAM_APPLE_INFO_DIR/backups"
-        cp "$config_file" "$TEAM_APPLE_INFO_DIR/backups/config.env.backup.$(date +%Y%m%d_%H%M%S)"
         
         # Update or add P12_PASSWORD
         if grep -q "^P12_PASSWORD=" "$config_file"; then
