@@ -238,20 +238,25 @@ platform :ios do
         UI.message("📁 Created build directory: #{build_dir}")
       end
       
-      # Build and archive the application
+      # Build and archive the application with automatic team ID assignment
       build_app(
         scheme: scheme,
         configuration: "Release",
         clean: true,
         archive_path: "./build/#{scheme}_#{version}_#{build_number}.xcarchive",
         export_method: "app-store",
+        export_team_id: team_id,
+        xcargs: "DEVELOPMENT_TEAM=#{team_id}",
         export_options: {
           method: "app-store",
           uploadBitcode: false,
           uploadSymbols: true,
           compileBitcode: false,
           teamID: team_id,
-          signingStyle: "automatic"
+          signingStyle: "automatic",
+          provisioningProfiles: {
+            app_identifier => "#{app_identifier} AppStore"
+          }
         }
       )
       
