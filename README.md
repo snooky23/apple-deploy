@@ -727,7 +727,7 @@ ios-deploy deploy \
   scheme="YourScheme"
 ```
 
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/ios-deploy-platform?style=for-the-badge&logo=github)](#)
+[![GitHub Stars](https://img.shields.io/github/stars/snooky23/ios-deploy-platform?style=for-the-badge&logo=github)](#)
 [![Production Ready](https://img.shields.io/badge/Production-Verified-success?style=for-the-badge)](#)
 [![TestFlight Success](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 
