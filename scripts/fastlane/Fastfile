@@ -246,7 +246,7 @@ platform :ios do
         archive_path: "./build/#{scheme}_#{version}_#{build_number}.xcarchive",
         export_method: "app-store",
         export_team_id: team_id,
-        xcargs: "DEVELOPMENT_TEAM=#{team_id}",
+        xcargs: "DEVELOPMENT_TEAM=#{team_id} -allowProvisioningUpdates",
         export_options: {
           method: "app-store",
           uploadBitcode: false,
