@@ -119,9 +119,8 @@ bundle install
 | Command | Purpose | Status |
 |---------|---------|---------|
 | `apple-deploy deploy` | Complete TestFlight deployment | ✅ Production Ready |
-| `apple-deploy setup_certificates` | Setup certificates & profiles | ✅ Production Ready |
-| `apple-deploy status` | Check configuration status | ✅ Production Ready |
 | `apple-deploy init` | Initialize project structure | ✅ Production Ready |
+| `apple-deploy setup_certificates` | Setup certificates & profiles | ✅ Production Ready |
 | `apple-deploy help` | Show usage information | ✅ Available |
 | `apple-deploy version` | Show version information | ✅ Available |
 
@@ -177,34 +176,6 @@ apple-deploy setup_certificates \
 ✅ Certificate setup complete! Ready for deployment.
 ```
 
-### 📊 `apple-deploy status` - Configuration Status Check  
-**What it does:** Validates your setup before deployment
-- ✅ Checks API key authentication
-- ✅ Verifies certificates are valid and not expired
-- ✅ Confirms provisioning profiles match your app
-- ✅ Tests Xcode project configuration
-
-```bash
-apple-deploy status \
-    apple_info_dir="./apple_info" \
-    team_id="ABC1234567" \
-    app_identifier="com.mycompany.myapp"
-```
-
-**Output example:**
-```
-📋 Apple Deploy Platform Status Check
-
-✅ API Key: AuthKey_ABCD123456.p8 (valid)
-✅ Team ID: ABC1234567 (authenticated)
-✅ App ID: com.mycompany.myapp (registered)
-✅ Certificates: 2 development, 3 distribution (valid)
-✅ Profiles: App Store profile found (expires: Dec 2025)
-✅ Xcode Project: MyApp.xcodeproj (configured)
-✅ Build Scheme: MyApp (found)
-
-🎯 Status: READY FOR DEPLOYMENT
-```
 
 ### 🏗️ `apple-deploy init` - Initialize Project Structure
 **What it does:** Sets up the apple_info directory structure in current directory
@@ -519,19 +490,53 @@ mv ~/Downloads/AuthKey_*.p8 /path/to/secure/apple_info/YOUR_TEAM_ID/
 </details>
 
 <details>
+<summary><strong>🚨 "App icon is missing" or TestFlight Upload Fails</strong></summary>
+
+**This is the #1 cause of first-time deployment failures!**
+
+Apple requires a proper app icon before TestFlight uploads. The build will fail with errors like:
+- "The app bundle does not contain an app icon for iPhone"
+- "App icon is missing"
+- "Invalid bundle - missing CFBundleIconName"
+
+**Quick Fix:**
+1. **Add App Icon to Xcode Project:**
+   ```
+   YourApp.xcodeproj → Assets.xcassets → AppIcon
+   ```
+
+2. **Required Icon Sizes (iOS):**
+   - 20x20, 29x29, 40x40, 58x58, 60x60, 76x76, 80x80, 87x87, 120x120, 152x152, 167x167, 180x180, 1024x1024
+
+3. **Quick Solution - Use App Icon Generator:**
+   - Visit [appicon.co](https://appicon.co) or similar
+   - Upload your 1024x1024 icon
+   - Download and drag all sizes into Xcode's AppIcon asset
+
+4. **Verify Icon is Set:**
+   ```bash
+   # Check your project settings
+   apple-deploy status apple_info_dir="./apple_info" team_id="YOUR_TEAM_ID" app_identifier="com.yourapp"
+   ```
+
+**After adding the icon, retry deployment - it should work immediately!** ✅
+
+</details>
+
+<details>
 <summary><strong>🚨 "Missing required apple_info_dir parameter"</strong></summary>
 
-**The apple_info_dir parameter is mandatory.** You must specify the absolute path:
+**The apple_info_dir parameter is only required for custom locations.** For local projects, it defaults to `./apple_info`:
 
 ```bash
-# ✅ Correct - absolute path
+# ✅ Local project (after apple-deploy init) - parameter optional
 apple-deploy deploy \
-    apple_info_dir="/Users/john/secure_apple_info" \
-    team_id="YOUR_TEAM_ID" [...]
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourapp" [...]
 
-# ❌ Incorrect - relative path not recommended for shared setups
+# ✅ Custom/shared location - specify absolute path  
 apple-deploy deploy \
-    apple_info_dir="./apple_info" \
+    apple_info_dir="/Users/john/shared_apple_info" \
     team_id="YOUR_TEAM_ID" [...]
 ```
 </details>
