@@ -1,7 +1,7 @@
 class IosDeployPlatform < Formula
   desc "Enterprise-grade iOS TestFlight automation platform with intelligent certificate management"
-  homepage "https://github.com/snooky23/ios-deploy-platform"
-  url "https://github.com/snooky23/ios-deploy-platform/archive/refs/tags/v2.3.0.tar.gz"
+  homepage "https://github.com/snooky23/apple-deploy"
+  url "https://github.com/snooky23/apple-deploy/archive/refs/tags/v2.3.0.tar.gz"
   sha256 "d0fae043fd57b322bc1f8372c6abb5a6581d29f29240c0bfa44d0973af5eb45e"
   license "MIT"
   version "2.3.0"
@@ -157,7 +157,7 @@ class IosDeployPlatform < Formula
           ios-deploy help       Show this help
           
       For detailed documentation, visit:
-      https://github.com/snooky23/ios-deploy-platform
+      https://github.com/snooky23/apple-deploy
       EOF
       }
       
@@ -394,7 +394,7 @@ class IosDeployPlatform < Formula
       Avi Levin
       
       .SH REPORTING BUGS
-      Report bugs to: https://github.com/snooky23/ios-deploy-platform/issues
+      Report bugs to: https://github.com/snooky23/apple-deploy/issues
       
       .SH COPYRIGHT
       Copyright \\[co] 2025 Avi Levin. Licensed under the MIT License.
@@ -469,7 +469,7 @@ class IosDeployPlatform < Formula
       📚 DOCUMENTATION:
       - Quick help: ios-deploy help
       - Manual page: man ios-deploy
-      - GitHub: https://github.com/snooky23/ios-deploy-platform
+      - GitHub: https://github.com/snooky23/apple-deploy
       
       🔧 REQUIREMENTS:
       - macOS with Xcode Command Line Tools

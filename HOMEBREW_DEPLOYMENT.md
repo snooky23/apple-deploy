@@ -11,12 +11,12 @@ cd homebrew-ios-tools
 
 # Create the required directory structure
 mkdir Formula
-cp ../ios-deploy-platform/homebrew-tap/ios-deploy-platform.rb Formula/
-cp ../ios-deploy-platform/homebrew-tap/README.md .
+cp ../apple-deploy/homebrew-tap/apple-deploy.rb Formula/
+cp ../apple-deploy/homebrew-tap/README.md .
 
 # Commit and push
 git add .
-git commit -m "Add ios-deploy-platform formula v2.3.0
+git commit -m "Add apple-deploy formula v2.3.0
 
 Complete Homebrew formula with:
 • CLI wrapper (ios-deploy command)
@@ -34,7 +34,7 @@ git push origin main
 brew tap snooky23/tools
 
 # Install the platform
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Test the CLI
 ios-deploy version  # Should show: iOS FastLane Auto Deploy v2.3.0
@@ -63,7 +63,7 @@ ruby --version
 
 ```bash
 brew tap snooky23/tools
-brew install ios-deploy-platform
+brew install apple-deploy
 ```
 
 ### And use it with:
@@ -77,7 +77,7 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 ## 📋 **What's Been Prepared:**
 
 ### ✅ **Complete Homebrew Formula**
-- **Location**: `homebrew-tap/ios-deploy-platform.rb`
+- **Location**: `homebrew-tap/apple-deploy.rb`
 - **SHA256**: `d0fae043fd57b322bc1f8372c6abb5a6581d29f29240c0bfa44d0973af5eb45e`
 - **Version**: v2.3.0
 - **All dependencies**: Ruby 3.2, FastLane, optional CocoaPods & xcode-install
@@ -90,7 +90,7 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 
 ### ✅ **Project Structure**
 - **Tap Repository**: Ready for `snooky23/homebrew-tools`
-- **Formula Directory**: `Formula/ios-deploy-platform.rb`
+- **Formula Directory**: `Formula/apple-deploy.rb`
 - **Documentation**: README with installation and usage instructions
 
 ### ✅ **Updated Main Documentation**

@@ -9,7 +9,7 @@ This is the official Homebrew tap for the iOS Deploy Platform.
 brew tap snooky23/ios-tools
 
 # Install the platform
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Initialize your iOS project
 cd /path/to/your/ios/project
@@ -34,7 +34,7 @@ ios-deploy deploy \
 
 - **Manual**: `man ios-deploy`
 - **Help**: `ios-deploy help`
-- **GitHub**: https://github.com/snooky23/ios-deploy-platform
+- **GitHub**: https://github.com/snooky23/apple-deploy
 
 ## Features
 

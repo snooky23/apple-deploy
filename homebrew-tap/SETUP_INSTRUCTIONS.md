@@ -21,12 +21,12 @@ git clone https://github.com/snooky23/homebrew-ios-tools.git
 cd homebrew-ios-tools
 
 # Copy the formula
-cp ../ios-deploy-platform/homebrew-tap/ios-deploy-platform.rb ./Formula/ios-deploy-platform.rb
-cp ../ios-deploy-platform/homebrew-tap/README.md ./README.md
+cp ../apple-deploy/homebrew-tap/apple-deploy.rb ./Formula/apple-deploy.rb
+cp ../apple-deploy/homebrew-tap/README.md ./README.md
 
 # Commit and push
 git add .
-git commit -m "Add ios-deploy-platform formula v2.3.0"
+git commit -m "Add apple-deploy formula v2.3.0"
 git push origin main
 ```
 
@@ -37,7 +37,7 @@ git push origin main
 brew tap snooky23/ios-tools
 
 # Install the platform
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Test the installation
 ios-deploy version
@@ -56,7 +56,7 @@ Update the main project README with:
 brew tap snooky23/ios-tools
 
 # Install the platform
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Quick project setup
 cd /path/to/your-ios-app
@@ -70,7 +70,7 @@ The Homebrew tap repository should look like:
 ```
 homebrew-ios-tools/
 ├── Formula/
-│   └── ios-deploy-platform.rb    # The Homebrew formula
+│   └── apple-deploy.rb    # The Homebrew formula
 └── README.md                     # Tap documentation
 ```
 
@@ -78,10 +78,10 @@ homebrew-ios-tools/
 
 ```bash
 # Test formula syntax
-brew audit --strict ios-deploy-platform
+brew audit --strict apple-deploy
 
 # Test installation from local file
-brew install --build-from-source ./Formula/ios-deploy-platform.rb
+brew install --build-from-source ./Formula/apple-deploy.rb
 
 # Test all functionality
 ios-deploy version

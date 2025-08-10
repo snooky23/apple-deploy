@@ -66,7 +66,7 @@ brew install ruby@3.2
 ```bash
 # Add the tap and install
 brew tap snooky23/tools
-brew install ios-deploy-platform
+brew install apple-deploy
 ```
 
 ### Step 2: Get Apple Credentials (2 minutes)
@@ -124,7 +124,7 @@ ios-deploy deploy \
 brew tap snooky23/tools
 
 # Install the platform
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Quick project setup
 cd /path/to/your-ios-app
@@ -137,8 +137,8 @@ ios-deploy init
 
 ```bash
 # Clone the repository
-git clone https://github.com/snooky23/ios-deploy-platform.git
-cd ios-deploy-platform
+git clone https://github.com/snooky23/apple-deploy.git
+cd apple-deploy
 
 # Install Ruby dependencies
 bundle install
@@ -296,7 +296,7 @@ my_app/
 
 ```bash
 # 1. Install ios-deploy platform and clone team project
-brew tap snooky23/tools && brew install ios-deploy-platform
+brew tap snooky23/tools && brew install apple-deploy
 git clone your-team-ios-project && cd your-app
 
 # 2. Initialize project and auto-import team certificates
@@ -318,7 +318,7 @@ ios-deploy deploy \
 
 ```bash
 # 1. Install platform and initialize team project
-brew tap snooky23/tools && brew install ios-deploy-platform
+brew tap snooky23/tools && brew install apple-deploy
 cd your-team-app && ios-deploy init
 
 # 2. Create and export team certificates
@@ -576,7 +576,7 @@ The system:
 cd /path/to/your-ios-app
 
 # Then run the deployment from there
-../ios-deploy-platform/scripts/deploy.sh build_and_upload [...]
+../apple-deploy/scripts/deploy.sh build_and_upload [...]
 ```
 </details>
 
@@ -716,7 +716,7 @@ cat build/logs/deployment_*.log
 ```bash
 # Install via Homebrew
 brew tap snooky23/tools
-brew install ios-deploy-platform
+brew install apple-deploy
 
 # Navigate to your project and deploy
 cd /path/to/your-ios-app
@@ -731,7 +731,7 @@ ios-deploy deploy \
   scheme="YourScheme"
 ```
 
-[![GitHub Stars](https://img.shields.io/github/stars/snooky23/ios-deploy-platform?style=for-the-badge&logo=github)](#)
+[![GitHub Stars](https://img.shields.io/github/stars/snooky23/apple-deploy?style=for-the-badge&logo=github)](#)
 [![Production Ready](https://img.shields.io/badge/Production-Verified-success?style=for-the-badge)](#)
 [![TestFlight Success](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 
