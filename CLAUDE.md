@@ -3,7 +3,7 @@
 ## 🎯 Project Overview
 **iOS Publishing Automation Platform** - Enterprise-grade iOS TestFlight automation with intelligent certificate management and multi-developer team collaboration.
 
-### Status: ✅ **PRODUCTION READY v2.3**
+### Status: ✅ **PRODUCTION READY v2.10.0**
 - ✅ Complete TestFlight Publishing Pipeline
 - ✅ Enhanced TestFlight Confirmation & Logging
 - ✅ Smart Provisioning Profile Management
@@ -17,15 +17,24 @@
 
 ## 🚀 Primary Commands
 
+### Homebrew Installation (Recommended)
+```bash
+brew tap snooky23/tools
+brew install apple-deploy
+```
+
 ### Multi-Team Deployment
 ```bash
 cd /path/to/your-app
 
-../scripts/deploy.sh build_and_upload \
+# Initialize project (one-time)
+apple-deploy init
+
+# Deploy to TestFlight
+apple-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   app_identifier="com.yourapp" \
   apple_id="dev@email.com" \
-  api_key_path="AuthKey_XXXXX.p8" \
   api_key_id="YOUR_KEY_ID" \
   api_issuer_id="your-issuer-uuid" \
   app_name="Your App" \
@@ -47,23 +56,23 @@ version_bump="sync"     # Sync with App Store + patch
 ### Enhanced TestFlight Mode
 ```bash
 # Standard upload (fast)
-../scripts/deploy.sh build_and_upload team_id="YOUR_TEAM_ID" ...
+apple-deploy deploy team_id="YOUR_TEAM_ID" ...
 
 # Enhanced mode with extended confirmation & logging
-../scripts/deploy.sh build_and_upload \
+apple-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   testflight_enhanced="true" \
   ...
 
-# Manual TestFlight status check  
-../scripts/deploy.sh check_testflight_status_standalone team_id="YOUR_TEAM_ID" ...
+# Manual status check  
+apple-deploy status team_id="YOUR_TEAM_ID" ...
 ```
 
 ### Utility Commands
 ```bash
-./scripts/deploy.sh setup_certificates app_identifier="com.yourapp" ...
-./scripts/deploy.sh validate_machine_certificates app_identifier="com.yourapp" ...
-./scripts/deploy.sh status app_identifier="com.yourapp" ...
+apple-deploy setup_certificates app_identifier="com.yourapp" ...
+apple-deploy status app_identifier="com.yourapp" ...
+apple-deploy init  # Initialize project structure
 ```
 
 ## 🏗️ Directory Structure
@@ -253,7 +262,7 @@ mv *.mobileprovision apple_info/profiles/
 - **Apple API Abstraction**: Clean adapter layer for certificate and profile operations
 - **100% Production Stability**: Zero downtime during all architectural improvements
 
-*Built for enterprise teams. Enhanced with [Claude Code](https://claude.ai/code)*
+*Built for enterprise teams. Enhanced with [Claude Code](https://claude.ai/code) - v2.10.0 with Clean Architecture*
 
 ---
 

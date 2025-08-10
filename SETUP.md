@@ -1,9 +1,9 @@
-# 📋 iOS Publishing Automation - Complete Setup & Configuration Guide
+# 📋 Apple Deploy Platform - Complete Setup Guide v2.10.0
 
 <div align="center">
 
 ![Setup Guide](https://img.shields.io/badge/Setup-Guide-blue?style=for-the-badge)
-![Step by Step](https://img.shields.io/badge/Step--by--Step-Instructions-green?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-2.10.0-blue?style=for-the-badge)
 ![Production Ready](https://img.shields.io/badge/Production-Ready-brightgreen?style=for-the-badge)
 
 **Complete setup guide from Apple Developer Account to first TestFlight deployment**  
@@ -15,214 +15,312 @@
 
 ## 🎯 Overview
 
-**✅ Platform Status**: FULLY OPERATIONAL with enhanced TestFlight confirmation & smart provisioning (v2.3)
+**✅ Platform Status**: FULLY OPERATIONAL with Enhanced Clean Architecture (v2.10.0)
 
-This guide provides **complete step-by-step instructions** for setting up the iOS Publishing Automation Platform. Whether you're a solo developer or setting up enterprise team infrastructure, this guide covers everything you need.
+This guide provides **complete step-by-step instructions** for setting up the Apple Deploy Platform. Whether you're a solo developer or setting up enterprise team infrastructure, this guide covers everything you need.
 
 ### ⏱️ **Time Investment**
-- **Solo Developer**: ~30 minutes for complete setup
-- **Team Lead (First Time)**: ~45 minutes to establish team infrastructure  
+- **Solo Developer**: ~15 minutes for complete setup (with Homebrew)
+- **Team Lead (First Time)**: ~30 minutes to establish team infrastructure  
 - **Team Member Onboarding**: ~5 minutes using existing team setup
 
 ### 🏆 **What You'll Achieve**
 - ✅ Fully configured Apple Developer Account with proper access
 - ✅ App Store Connect API keys for secure automation
 - ✅ Production-ready team directory structure
-- ✅ Working iOS deployment pipeline with TestFlight uploads
-- ✅ Smart provisioning profile management and certificate handling
-- ✅ Team collaboration infrastructure for enterprise scaling
+- ✅ Complete TestFlight deployment automation
+- ✅ Enhanced monitoring with real-time status updates
 
 ---
 
-## 📋 Prerequisites Checklist
+## 🚀 Quick Start (Recommended)
 
-### **Required Software**
+### Step 1: Install via Homebrew (30 seconds)
 ```bash
-# Verify you have these installed:
-xcodebuild -version          # Xcode 14+ required
-fastlane --version          # Install: gem install fastlane
-ruby --version              # Ruby 2.7+ recommended
-git --version               # Git for version control
+brew tap snooky23/tools
+brew install apple-deploy
 ```
 
-### **Required Accounts & Access**
-- [ ] **Apple ID** with developer account access
-- [ ] **Apple Developer Program** membership ($99/year)
-- [ ] **App Store Connect** access with App Manager role
-- [ ] **iOS project** ready for deployment
-- [ ] **Mac computer** with Xcode installed
+### Step 2: Get Apple Credentials (5 minutes)
+1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
+2. Create API key with **App Manager** role
+3. Download the `AuthKey_XXXXX.p8` file
+4. Note your **Key ID** and **Issuer ID**
 
-### **Team Requirements (if applicable)**
-- [ ] **Team Admin** access to Apple Developer account
-- [ ] **Shared secure location** for team certificates and API keys
-- [ ] **Git repository** access for team collaboration
+### Step 3: Initialize & Deploy (2 minutes)
+```bash
+# Navigate to your iOS project
+cd /path/to/your-ios-app
+
+# Initialize project structure
+apple-deploy init
+
+# Add your API key
+mv ~/Downloads/AuthKey_XXXXX.p8 apple_info/
+
+# Deploy to TestFlight
+apple-deploy deploy \
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourcompany.app" \
+    apple_id="your@email.com" \
+    api_key_id="YOUR_KEY_ID" \
+    api_issuer_id="your-issuer-uuid" \
+    app_name="Your App" \
+    scheme="YourScheme"
+```
+
+**🎉 Your app is now live on TestFlight!**
 
 ---
 
-## 🍎 Step 1: Apple Developer Account Setup
+## 📋 Detailed Setup Instructions
 
-### **1.1 Create or Verify Apple Developer Account**
+### 🍎 **Apple Developer Account Setup**
 
-**If you don't have an Apple Developer Account:**
+#### 1. Apple Developer Program Membership
+- **Individual Account**: $99/year - Perfect for solo developers
+- **Organization Account**: $99/year - Required for enterprise teams
+- **Enterprise Account**: $299/year - For internal distribution only
 
-1. **Visit** [Apple Developer Program](https://developer.apple.com/programs/)
-2. **Click** "Enroll" and choose:
-   - **Individual**: Personal projects, single developer
-   - **Organization**: Team/company projects, multiple developers
-3. **Complete enrollment** (requires $99/year payment)
-4. **Wait for approval** (typically 24-48 hours)
+#### 2. Create App Store Connect API Key
+**Why needed**: Enables secure automation without storing Apple ID passwords
 
-**If you already have an account:**
-- **Sign in** to [Apple Developer Portal](https://developer.apple.com/)
-- **Verify** you have access to "Certificates, Identifiers & Profiles"
+**Steps**:
+1. Visit [App Store Connect](https://appstoreconnect.apple.com)
+2. Go to **Users and Access** → **Keys** → **App Store Connect API**
+3. Click **Generate API Key**
+4. Fill in details:
+   - **Name**: "iOS Deploy Automation" (or similar)
+   - **Access**: **App Manager** (required for TestFlight)
+   - **Download**: Save the `AuthKey_XXXXX.p8` file securely
+5. **Copy the Key ID and Issuer ID** - you'll need these for deployment
 
-### **1.2 Find and Document Your Team ID**
+**⚠️ Security Note**: Download the API key immediately - it's only available once!
 
-**Your Team ID is critical - you'll need it for every deployment:**
+### 📱 **App Registration**
 
-1. **Sign in** to [Apple Developer Portal](https://developer.apple.com/account/)
-2. **Click** "Membership" in the sidebar
-3. **Locate** your Team ID (10 alphanumeric characters like "ABC1234567")
-4. **Document it** - you'll use this in every deployment command
+#### 1. Register Your App Identifier
+1. Visit [Apple Developer Portal](https://developer.apple.com/account/)
+2. Go to **Certificates, Identifiers & Profiles** → **Identifiers**
+3. Click **+** → **App IDs** → **App**
+4. Fill in:
+   - **Description**: "Your App Name"
+   - **Bundle ID**: `com.yourcompany.yourapp` (must match Xcode)
+   - **Capabilities**: Enable needed features (Push Notifications, etc.)
 
-**Alternative locations to find Team ID:**
-- **App Store Connect** → **Settings** → **General** → **Team ID**
-- **Xcode** → **Project Settings** → **Team** (shows Team ID in parentheses)
+#### 2. Create App Store Connect Record
+1. Visit [App Store Connect](https://appstoreconnect.apple.com)
+2. Go to **My Apps** → **+** → **New App**
+3. Fill in:
+   - **Platform**: iOS
+   - **Name**: Your app name
+   - **Primary Language**: English (or preferred)
+   - **Bundle ID**: Select from dropdown (registered above)
+   - **SKU**: Unique identifier (can be bundle ID)
 
-### 1. Multi-Team Directory Setup (Recommended)
+---
 
-Create the production-ready multi-team structure:
+## 🏢 **Team Collaboration Setup**
 
+### **Option 1: Shared Credentials Directory (Recommended)**
+
+**Team Lead Setup** (one-time):
 ```bash
-# Create team-based directory structure
-mkdir -p /path/to/private_apple_info/YOUR_TEAM_ID/{certificates,profiles}
+# Create shared credentials location
+mkdir -p /shared/ios-team-credentials
+cd /shared/ios-team-credentials
 
-# Place your API key in the team directory
-mv AuthKey_*.p8 /path/to/private_apple_info/YOUR_TEAM_ID/
+# Initialize structure
+apple-deploy init
+
+# Add team credentials
+mv ~/Downloads/AuthKey_XXXXX.p8 apple_info/
+# Add any existing certificates to apple_info/certificates/
+
+# First deployment creates team certificates
+apple-deploy deploy \
+    apple_info_dir="/shared/ios-team-credentials/apple_info" \
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourteamapp" \
+    apple_id="team-lead@company.com" \
+    api_key_id="YOUR_KEY_ID" \
+    api_issuer_id="your-issuer-uuid" \
+    app_name="Team App" \
+    scheme="YourScheme"
 ```
 
-### 2. Deploy with Production-Verified Command
-
-Use the production-tested deployment command:
-
+**Team Member Setup** (5 minutes):
 ```bash
-cd /path/to/your-app
+# Install apple-deploy
+brew tap snooky23/tools && brew install apple-deploy
 
-../scripts/deploy.sh build_and_upload \
-  team_id="YOUR_TEAM_ID" \
-  apple_info_dir="/path/to/private_apple_info" \
-  app_identifier="com.yourcompany.app" \
-  apple_id="your@email.com" \
-  api_key_path="AuthKey_XXXXX.p8" \
-  api_key_id="YOUR_KEY_ID" \
-  api_issuer_id="your-issuer-uuid" \
-  app_name="Your App" \
-  scheme="YourScheme"
+# Deploy using shared credentials
+cd /path/to/your-ios-app
+apple-deploy deploy \
+    apple_info_dir="/shared/ios-team-credentials/apple_info" \
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourteamapp" \
+    apple_id="your@company.com" \
+    api_key_id="YOUR_KEY_ID" \
+    api_issuer_id="your-issuer-uuid" \
+    app_name="Team App" \
+    scheme="YourScheme"
 ```
 
-**✅ This command successfully deployed Voice Forms (com.yourcompany.yourapp) v1.0.257 to TestFlight**
+### **Option 2: Local Project Credentials**
 
-### 🚀 **NEW: Enhanced TestFlight Mode**
-
+Each developer manages their own project credentials:
 ```bash
-# Enhanced mode with extended confirmation & logging
-../scripts/deploy.sh build_and_upload \
-  team_id="YOUR_TEAM_ID" \
-  testflight_enhanced="true" \
-  apple_info_dir="/path/to/private_apple_info" \
-  app_identifier="com.yourcompany.app" \
-  # ... other parameters
+cd /path/to/your-ios-app
+apple-deploy init
+# Add API key and deploy as in Quick Start
 ```
 
-**Enhanced Features:**
-- ⏱️ **Upload Duration Tracking** - See exact upload time and performance
-- 🔄 **Real-time Processing Status** - Wait for Apple to process your build  
-- 📊 **Build History Display** - View last 5 TestFlight builds
-- 📝 **Advanced Audit Logging** - Comprehensive tracking
-- ✅ **Processing Confirmation** - Verify build is "Ready to Test"
-- 🔄 **Smart Profile Reuse** - Automatically reuses existing valid provisioning profiles
+---
 
-### 2. Get Your Apple Developer Credentials
+## 🔧 **Advanced Configuration**
 
-You need these from your Apple Developer account:
-
-1. **Team ID**: Found in Apple Developer Account → Membership
-2. **App Store Connect API Key**: 
-   - Go to App Store Connect → Users and Access → Keys
-   - Create a new key with "Developer" role
-   - Download the `.p8` file and note the Key ID and Issuer ID
-3. **Bundle ID**: Your app's identifier (e.g., `com.yourcompany.yourapp`)
-
-### 3. Place Your API Key
-
-Put your App Store Connect API key in the certificates folder:
-
+### **Enhanced TestFlight Mode**
 ```bash
-mkdir -p certificates
-# Copy your AuthKey_XXXXXX.p8 file to certificates/
+apple-deploy deploy \
+    testflight_enhanced="true" \
+    # ... other parameters
+```
+**Features**:
+- ⏱️ Upload duration tracking
+- 🔄 Real-time processing status
+- 📊 Build history display
+- 📝 Advanced audit logging
+- ✅ Processing confirmation until "Ready to Test"
+
+### **Version Management**
+```bash
+# Semantic versioning
+version_bump="patch"  # 1.0.0 → 1.0.1
+version_bump="minor"  # 1.0.0 → 1.1.0  
+version_bump="major"  # 1.0.0 → 2.0.0
+
+# App Store integration
+version_bump="auto"   # Smart conflict resolution
+version_bump="sync"   # Sync with App Store + patch
 ```
 
-### 4. Run the Automation
-
+### **Multi-Team Support**
 ```bash
-./scripts/deploy.sh build_and_upload
+# Team A
+apple-deploy deploy apple_info_dir="/secure/apple_info" team_id="ABC1234567" ...
+
+# Team B  
+apple-deploy deploy apple_info_dir="/secure/apple_info" team_id="DEF7890123" ...
 ```
 
-That's it! The system will:
-- ✅ Query TestFlight for the latest build number
-- ✅ Automatically increment to the next build number  
-- ✅ Set up certificates and provisioning profiles
-- ✅ Build and upload to TestFlight
+---
 
-## Configuration Values Explained
+## ✅ **Verification & Testing**
 
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `APP_IDENTIFIER` | Your app's bundle identifier | `com.yourcompany.yourapp` |
-| `APPLE_ID` | Apple Developer account email | `developer@yourcompany.com` |
-| `TEAM_ID` | Apple Developer Team ID | `ABC123DEF4` |
-| `API_KEY_ID` | App Store Connect API Key ID | `XYZ789ABC1` |
-| `API_ISSUER_ID` | App Store Connect API Issuer ID | `12345678-1234-1234-1234-123456789012` |
-| `API_KEY_PATH` | Path to your .p8 API key file | `../certificates/AuthKey_XYZ789ABC1.p8` |
-| `APP_NAME` | Display name for your app | `"My Awesome App"` |
-| `SCHEME` | Xcode scheme to build | `MyApp` |
-| `P12_PASSWORD` | Password for certificate export | `SecurePassword123!` |
+### **Check Setup Status**
+```bash
+apple-deploy status \
+    apple_info_dir="./apple_info" \
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourapp"
+```
 
-## Finding Your Values
+**Expected Output**:
+```
+📋 Apple Deploy Platform Status Check
 
-### Team ID
-1. Go to [Apple Developer Account](https://developer.apple.com/account/)
-2. Click "Membership" in the sidebar
-3. Your Team ID is listed there
+✅ API Key: AuthKey_ABCD123456.p8 (valid)
+✅ Team ID: ABC1234567 (authenticated)
+✅ App ID: com.yourapp (registered)
+✅ Certificates: 2 development, 3 distribution (valid)
+✅ Profiles: App Store profile found (expires: Dec 2025)
+✅ Xcode Project: MyApp.xcodeproj (configured)
+✅ Build Scheme: MyApp (found)
 
-### App Store Connect API Key
-1. Go to [App Store Connect](https://appstoreconnect.apple.com)
-2. Users and Access → Keys → App Store Connect API
-3. Create a new key with "Developer" role
-4. Download the `.p8` file
-5. Note the Key ID and Issuer ID
+🎯 Status: READY FOR DEPLOYMENT
+```
 
-### Bundle ID
-- This is your app's unique identifier
-- Format: `com.yourcompany.yourapp`
-- Must match what's in your Xcode project
+### **Certificate Setup Only**
+```bash
+# Test certificate creation without building
+apple-deploy setup_certificates \
+    apple_info_dir="./apple_info" \
+    team_id="YOUR_TEAM_ID" \
+    app_identifier="com.yourapp"
+```
 
-## Troubleshooting
+---
 
-**"Missing required configuration" error:**
-- Make sure all required values are set in `config.env`
-- Check that the API key file exists at the specified path
+## 🐛 **Common Setup Issues**
 
-**"Could not find API key file" error:**
-- Verify the `API_KEY_PATH` points to your `.p8` file
-- Make sure the file exists in the certificates folder
+### **"App icon is missing"**
+**Solution**: Add proper app icon to Xcode project
+1. Open Xcode → `Assets.xcassets` → `AppIcon`
+2. Add all required sizes or use [appicon.co](https://appicon.co)
+3. Retry deployment
 
-**Build number conflicts:**
-- The system automatically handles this by querying TestFlight
-- If you still get conflicts, wait a few minutes and try again
+### **"API key file not found"**
+**Solution**: Check file location
+```bash
+# Verify API key location
+ls -la apple_info/AuthKey_*.p8
 
-## Security Note
+# Move if needed
+mv ~/Downloads/AuthKey_*.p8 apple_info/
+```
 
-- Never commit your `config.env` file to git (it's already in `.gitignore`)
-- Keep your API key files secure and never share them
-- Use strong passwords for P12 certificate export
+### **"Team ID not found"**
+**Solution**: Get your Team ID
+1. Visit [Apple Developer Portal](https://developer.apple.com/account/)
+2. **Membership Details** → Copy **Team ID** (10 characters)
+
+---
+
+## 📊 **Setup Success Criteria**
+
+### **✅ Solo Developer**
+- [ ] Apple Developer Program membership active
+- [ ] App Store Connect API key created and downloaded
+- [ ] App registered in both Developer Portal and App Store Connect
+- [ ] `apple-deploy` installed via Homebrew
+- [ ] First TestFlight deployment successful
+- [ ] App icon properly configured
+
+### **✅ Team Lead**
+- [ ] All solo developer criteria met
+- [ ] Shared credentials directory established
+- [ ] Team certificates created and exported
+- [ ] Team member access documented
+- [ ] Multi-team structure if managing multiple teams
+
+### **✅ Team Member**
+- [ ] `apple-deploy` installed via Homebrew
+- [ ] Access to shared credentials directory
+- [ ] First deployment using shared credentials successful
+- [ ] Understanding of team workflow
+
+---
+
+## 🚀 **What's Next?**
+
+After successful setup, you can:
+
+1. **Deploy regularly**: `apple-deploy deploy ...`
+2. **Version management**: Use semantic versioning with conflict resolution
+3. **Team collaboration**: Share credentials or use individual setups
+4. **Enhanced monitoring**: Enable TestFlight processing confirmation
+5. **Scale operations**: Add more apps and teams as needed
+
+---
+
+## 📞 **Support**
+
+- **Documentation**: [README.md](README.md) for complete reference
+- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
+- **Security**: [SECURITY_GUIDE.md](SECURITY_GUIDE.md) for security practices
+- **Issues**: [GitHub Issues](https://github.com/snooky23/apple-deploy/issues)
+
+---
+
+*Built for enterprise teams. Production-verified with enhanced Clean Architecture v2.10.0.*
