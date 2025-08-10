@@ -254,12 +254,21 @@ platform :ios do
       # Build and archive the application with intelligent signing failover
       ipa_path = nil
       build_attempt = 1
-      max_attempts = 2
+      max_attempts = 3  # Increased to allow for profile regeneration
       
       while build_attempt <= max_attempts && ipa_path.nil?
         begin
           signing_style = build_attempt == 1 ? "automatic" : "manual"
-          UI.message("🔨 Build attempt #{build_attempt}/#{max_attempts} using #{signing_style} signing...")
+          
+          # More descriptive attempt messages
+          case build_attempt
+          when 1
+            UI.message("🔨 Build attempt 1/3: Trying automatic signing...")
+          when 2
+            UI.message("🔨 Build attempt 2/3: Retrying with manual signing...")
+          when 3
+            UI.message("🔨 Build attempt 3/3: Final attempt after profile regeneration...")
+          end
           
           # For manual signing, configure Xcode project to disable automatic signing
           if signing_style == "manual"
@@ -278,26 +287,62 @@ platform :ios do
             end
           end
           
-          # Configure provisioning profile name based on signing style
-          profile_name = if signing_style == "automatic"
-            "#{app_identifier} AppStore"  # Automatic signing expects this format
+          # Configure provisioning profile name and certificate based on signing style
+          profile_name = nil
+          certificate_name = nil
+          
+          if signing_style == "automatic"
+            profile_name = "#{app_identifier} AppStore"  # Automatic signing expects this format
           else
-            # For manual signing, find the actual profile file name
+            # For manual signing, intelligently match certificates and profiles
             profiles_dir = ENV['FL_PROFILES_DIR']
+            certificates_dir = ENV['FL_CERTIFICATES_DIR']
+            
             if profiles_dir && Dir.exist?(profiles_dir)
               profile_files = Dir.glob("#{profiles_dir}/*AppStore*.mobileprovision")
               if profile_files.any?
                 profile_file = profile_files.first
-                # Extract profile name from mobileprovision file
                 profile_name = File.basename(profile_file, '.mobileprovision').gsub(/^AppStore_/, '')
-                UI.message("📱 Found manual profile: #{File.basename(profile_file)} -> #{profile_name}")
-                profile_name
+                UI.message("📱 Found AppStore profile: #{File.basename(profile_file)} -> #{profile_name}")
+                
+                # For AppStore profiles, we need distribution certificates
+                keychain_path = Dir.glob("#{certificates_dir}/*.keychain-db").first
+                if keychain_path
+                  identities_output = `security find-identity -v -p codesigning "#{keychain_path}" 2>/dev/null`
+                  
+                  identities_output.split("\n").each do |line|
+                    if line.include?("Apple Distribution")
+                      certificate_name = line.match(/"([^"]*)"/)&.captures&.first
+                      UI.message("🔧 Matched with distribution certificate: #{certificate_name}")
+                      break
+                    end
+                  end
+                end
               else
-                "#{app_identifier} AppStore"  # Fallback
+                profile_name = "#{app_identifier} AppStore"  # Fallback
               end
             else
-              "#{app_identifier} AppStore"  # Fallback
+              profile_name = "#{app_identifier} AppStore"  # Fallback
             end
+          end
+          
+          # Build export options with intelligent certificate/profile matching
+          export_options = {
+            method: "app-store",
+            uploadBitcode: false,
+            uploadSymbols: true,
+            compileBitcode: false,
+            teamID: team_id,
+            signingStyle: signing_style,
+            provisioningProfiles: {
+              app_identifier => profile_name
+            }
+          }
+          
+          # Add certificate specification for manual signing if we found a match
+          if signing_style == "manual" && certificate_name
+            export_options[:signingCertificate] = certificate_name
+            UI.message("🔧 Export will use certificate: #{certificate_name}")
           end
           
           build_app(
@@ -308,17 +353,7 @@ platform :ios do
             export_method: "app-store",
             export_team_id: team_id,
             xcargs: "DEVELOPMENT_TEAM=#{team_id}",
-            export_options: {
-              method: "app-store",
-              uploadBitcode: false,
-              uploadSymbols: true,
-              compileBitcode: false,
-              teamID: team_id,
-              signingStyle: signing_style,
-              provisioningProfiles: {
-                app_identifier => profile_name
-              }
-            }
+            export_options: export_options
           )
           
           ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
@@ -329,12 +364,92 @@ platform :ios do
         rescue => build_error
           UI.error("❌ Build attempt #{build_attempt} failed: #{build_error.message}")
           
-          if build_attempt < max_attempts
-            UI.important("🔄 Retrying with manual signing configuration...")
-            build_attempt += 1
+          # Check if this is a certificate/profile mismatch error
+          if build_error.message.include?("doesn't include signing certificate") || 
+             build_error.message.include?("requires a provisioning profile")
+            
+            if build_attempt < max_attempts
+              UI.important("🔄 Detected certificate/profile mismatch - fixing certificate selection...")
+              
+              # Get available certificates from keychain
+              certificates_dir = ENV['FL_CERTIFICATES_DIR']
+              keychain_path = Dir.glob("#{certificates_dir}/*.keychain-db").first
+              
+              if keychain_path
+                UI.message("🔍 Analyzing available certificates in keychain...")
+                
+                # Get all available signing identities
+                identities_output = `security find-identity -v -p codesigning "#{keychain_path}" 2>/dev/null`
+                
+                # Find distribution certificate for AppStore profile
+                distribution_cert = nil
+                development_cert = nil
+                
+                identities_output.split("\n").each do |line|
+                  if line.include?("Apple Distribution")
+                    # Extract certificate name
+                    distribution_cert = line.match(/"([^"]*)"/)&.captures&.first
+                    UI.message("📋 Found distribution certificate: #{distribution_cert}")
+                  elsif line.include?("Apple Development")
+                    development_cert = line.match(/"([^"]*)"/)&.captures&.first
+                    UI.message("📋 Found development certificate: #{development_cert}")
+                  end
+                end
+                
+                # For AppStore profiles, we need distribution certificates
+                if profile_name.include?("AppStore") && distribution_cert
+                  UI.message("🔧 Configuring Xcode to use distribution certificate for AppStore profile...")
+                  
+                  # Update project to use specific certificate
+                  begin
+                    update_project_provisioning(
+                      xcodeproj: "./#{scheme}.xcodeproj",
+                      target_filter: ".*#{scheme}.*",
+                      profile: "#{ENV['FL_PROFILES_DIR']}/AppStore_#{app_identifier}.mobileprovision",
+                      build_configuration: "Release",
+                      certificate: distribution_cert
+                    )
+                    UI.success("✅ Updated project to use distribution certificate: #{distribution_cert}")
+                  rescue => cert_update_error
+                    UI.message("⚠️ Standard certificate update failed: #{cert_update_error.message}")
+                    
+                    # Fallback: Manual xcodeproj modification
+                    UI.message("🔧 Applying manual certificate configuration...")
+                    project_path = "./#{scheme}.xcodeproj/project.pbxproj"
+                    
+                    if File.exist?(project_path)
+                      project_content = File.read(project_path)
+                      
+                      # Update CODE_SIGN_IDENTITY to use distribution certificate
+                      project_content.gsub!(/CODE_SIGN_IDENTITY\s*=\s*"[^"]*";/, 'CODE_SIGN_IDENTITY = "' + distribution_cert + '";')
+                      
+                      File.write(project_path, project_content)
+                      UI.success("✅ Manually configured project to use distribution certificate")
+                    end
+                  end
+                  
+                elsif development_cert
+                  UI.message("🔧 Using development certificate: #{development_cert}")
+                end
+                
+                build_attempt += 1
+              else
+                UI.error("❌ Could not find temporary keychain")
+                raise "Temporary keychain not found for certificate analysis"
+              end
+            else
+              UI.error("💥 All build attempts failed")
+              raise "Build failed after #{max_attempts} attempts. Last error: #{build_error.message}"
+            end
           else
-            UI.error("💥 All build attempts failed")
-            raise "Build failed after #{max_attempts} attempts. Last error: #{build_error.message}"
+            # For other types of errors, just retry with manual signing
+            if build_attempt < max_attempts
+              UI.important("🔄 Retrying with manual signing configuration...")
+              build_attempt += 1
+            else
+              UI.error("💥 All build attempts failed")
+              raise "Build failed after #{max_attempts} attempts. Last error: #{build_error.message}"
+            end
           end
         end
       end
