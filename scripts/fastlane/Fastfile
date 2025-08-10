@@ -251,31 +251,93 @@ platform :ios do
         UI.message("💡 This is expected for some project configurations - using xcargs fallback")
       end
       
-      # Build and archive the application with automatic team ID assignment
-      build_app(
-        scheme: scheme,
-        configuration: "Release",
-        clean: true,
-        archive_path: "./build/#{scheme}_#{version}_#{build_number}.xcarchive",
-        export_method: "app-store",
-        export_team_id: team_id,
-        xcargs: "DEVELOPMENT_TEAM=#{team_id}",
-        export_options: {
-          method: "app-store",
-          uploadBitcode: false,
-          uploadSymbols: true,
-          compileBitcode: false,
-          teamID: team_id,
-          signingStyle: "automatic",
-          provisioningProfiles: {
-            app_identifier => "#{app_identifier} AppStore"
-          }
-        }
-      )
+      # Build and archive the application with intelligent signing failover
+      ipa_path = nil
+      build_attempt = 1
+      max_attempts = 2
       
-      ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
-      UI.success("🎉 Build completed successfully!")
-      UI.message("📦 IPA location: #{ipa_path}")
+      while build_attempt <= max_attempts && ipa_path.nil?
+        begin
+          signing_style = build_attempt == 1 ? "automatic" : "manual"
+          UI.message("🔨 Build attempt #{build_attempt}/#{max_attempts} using #{signing_style} signing...")
+          
+          # For manual signing, configure Xcode project to disable automatic signing
+          if signing_style == "manual"
+            begin
+              UI.message("🔧 Configuring project for manual code signing...")
+              update_project_provisioning(
+                xcodeproj: "./#{scheme}.xcodeproj",
+                target_filter: ".*#{scheme}.*",
+                profile: "#{profiles_dir}/AppStore_#{app_identifier}.mobileprovision",
+                build_configuration: "Release"
+              )
+              UI.success("✅ Project configured for manual signing")
+            rescue => e
+              UI.message("⚠️ Could not configure manual signing via update_project_provisioning: #{e.message}")
+              UI.message("💡 Continuing with export_options configuration...")
+            end
+          end
+          
+          # Configure provisioning profile name based on signing style
+          profile_name = if signing_style == "automatic"
+            "#{app_identifier} AppStore"  # Automatic signing expects this format
+          else
+            # For manual signing, find the actual profile file name
+            profiles_dir = ENV['FL_PROFILES_DIR']
+            if profiles_dir && Dir.exist?(profiles_dir)
+              profile_files = Dir.glob("#{profiles_dir}/*AppStore*.mobileprovision")
+              if profile_files.any?
+                profile_file = profile_files.first
+                # Extract profile name from mobileprovision file
+                profile_name = File.basename(profile_file, '.mobileprovision').gsub(/^AppStore_/, '')
+                UI.message("📱 Found manual profile: #{File.basename(profile_file)} -> #{profile_name}")
+                profile_name
+              else
+                "#{app_identifier} AppStore"  # Fallback
+              end
+            else
+              "#{app_identifier} AppStore"  # Fallback
+            end
+          end
+          
+          build_app(
+            scheme: scheme,
+            configuration: "Release",
+            clean: build_attempt == 1, # Only clean on first attempt
+            archive_path: "./build/#{scheme}_#{version}_#{build_number}.xcarchive",
+            export_method: "app-store",
+            export_team_id: team_id,
+            xcargs: "DEVELOPMENT_TEAM=#{team_id}",
+            export_options: {
+              method: "app-store",
+              uploadBitcode: false,
+              uploadSymbols: true,
+              compileBitcode: false,
+              teamID: team_id,
+              signingStyle: signing_style,
+              provisioningProfiles: {
+                app_identifier => profile_name
+              }
+            }
+          )
+          
+          ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+          UI.success("🎉 Build completed successfully with #{signing_style} signing!")
+          UI.message("📦 IPA location: #{ipa_path}")
+          break
+          
+        rescue => build_error
+          UI.error("❌ Build attempt #{build_attempt} failed: #{build_error.message}")
+          
+          if build_attempt < max_attempts
+            UI.important("🔄 Retrying with manual signing configuration...")
+            build_attempt += 1
+          else
+            UI.error("💥 All build attempts failed")
+            raise "Build failed after #{max_attempts} attempts. Last error: #{build_error.message}"
+          end
+        end
+      end
       
       # Check if enhanced TestFlight mode is enabled
       testflight_enhanced = ENV['FL_TESTFLIGHT_ENHANCED'] == 'true'
