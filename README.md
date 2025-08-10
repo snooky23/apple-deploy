@@ -86,13 +86,6 @@ apple-deploy deploy \
     scheme="YourScheme"
 ```
 
-### 🎉 That's It! 
-Your app is now live on TestFlight with:
-- ✅ Certificates automatically created/imported
-- ✅ Version conflicts automatically resolved  
-- ✅ TestFlight upload completed with verification
-- ✅ Processing status monitored until ready
-
 ---
 
 ## 📦 Installation
@@ -132,39 +125,130 @@ bundle install
 | `apple-deploy help` | Show usage information | ✅ Available |
 | `apple-deploy version` | Show version information | ✅ Available |
 
-### Complete TestFlight Deployment
+### 🚀 `apple-deploy deploy` - Complete TestFlight Deployment
+**What it does:** Full end-to-end deployment from code to TestFlight
+- ✅ Creates/imports certificates automatically
+- ✅ Builds your iOS app with proper signing
+- ✅ Uploads to TestFlight with version management
+- ✅ Monitors processing until "Ready to Test"
+
 ```bash
 apple-deploy deploy \
-    apple_info_dir="/path/to/secure/apple_info" \
-    team_id="YOUR_TEAM_ID" \
-    app_identifier="com.yourcompany.app" \
-    apple_id="your@email.com" \
-    api_key_id="YOUR_KEY_ID" \
-    api_issuer_id="your-issuer-uuid" \
-    app_name="Your App" \
-    scheme="YourScheme"
+    apple_info_dir="./apple_info" \
+    team_id="ABC1234567" \
+    app_identifier="com.mycompany.myapp" \
+    apple_id="developer@mycompany.com" \
+    api_key_id="ABCD123456" \
+    api_issuer_id="12345678-1234-1234-1234-123456789012" \
+    app_name="My Awesome App" \
+    scheme="MyApp"
 ```
 
-### Certificate Setup Only
+**Output example:**
+```
+🔐 Setting up certificates... ✅ Complete
+📋 Building MyApp (Release)... ✅ Complete  
+📤 Uploading to TestFlight... ✅ Complete
+⏱️ Processing status: Ready to Test (2m 34s)
+🎉 Successfully deployed v1.2.3 build 45 to TestFlight!
+```
+
+### 🔐 `apple-deploy setup_certificates` - Certificate Setup Only
+**What it does:** Creates and imports certificates/profiles without building
+- ✅ Downloads existing certificates from Apple Developer Portal
+- ✅ Creates new certificates if needed (respects Apple's 2 dev + 3 distribution limit)
+- ✅ Generates provisioning profiles for your app
+- ✅ Imports everything to temporary keychain for signing
+
 ```bash
 apple-deploy setup_certificates \
-    apple_info_dir="/path/to/secure/apple_info" \
-    team_id="YOUR_TEAM_ID" \
-    app_identifier="com.yourcompany.app"
+    apple_info_dir="./apple_info" \
+    team_id="ABC1234567" \
+    app_identifier="com.mycompany.myapp"
 ```
 
-### Check Configuration Status
+**Output example:**
+```
+🔍 Checking existing certificates...
+📥 Found 1 development, 2 distribution certificates
+✨ Creating new development certificate
+📋 Generating provisioning profile for com.mycompany.myapp
+🔐 Importing certificates to keychain
+✅ Certificate setup complete! Ready for deployment.
+```
+
+### 📊 `apple-deploy status` - Configuration Status Check  
+**What it does:** Validates your setup before deployment
+- ✅ Checks API key authentication
+- ✅ Verifies certificates are valid and not expired
+- ✅ Confirms provisioning profiles match your app
+- ✅ Tests Xcode project configuration
+
 ```bash
 apple-deploy status \
-    apple_info_dir="/path/to/secure/apple_info" \
-    team_id="YOUR_TEAM_ID" \
-    app_identifier="com.yourcompany.app"
+    apple_info_dir="./apple_info" \
+    team_id="ABC1234567" \
+    app_identifier="com.mycompany.myapp"
 ```
 
-### Initialize New Project
+**Output example:**
+```
+📋 Apple Deploy Platform Status Check
+
+✅ API Key: AuthKey_ABCD123456.p8 (valid)
+✅ Team ID: ABC1234567 (authenticated)
+✅ App ID: com.mycompany.myapp (registered)
+✅ Certificates: 2 development, 3 distribution (valid)
+✅ Profiles: App Store profile found (expires: Dec 2025)
+✅ Xcode Project: MyApp.xcodeproj (configured)
+✅ Build Scheme: MyApp (found)
+
+🎯 Status: READY FOR DEPLOYMENT
+```
+
+### 🏗️ `apple-deploy init` - Initialize Project Structure
+**What it does:** Sets up the apple_info directory structure in your project
+- ✅ Creates `apple_info/` directory with proper structure
+- ✅ Generates `config.env` template with your team settings
+- ✅ Creates subdirectories for certificates and profiles
+- ✅ Provides next-steps guidance
+
 ```bash
-# Run from your iOS project directory
+# Run from your iOS project root directory
+cd /path/to/MyAwesomeApp
 apple-deploy init
+```
+
+**What it creates:**
+```
+MyAwesomeApp/
+├── MyApp.xcodeproj
+├── apple_info/                    # 📁 Created by init
+│   ├── certificates/              # 📁 For .p12 files
+│   ├── profiles/                  # 📁 For .mobileprovision files
+│   └── config.env                 # 📄 Template configuration
+└── fastlane/                      # 📁 Runtime scripts (auto-copied)
+```
+
+**Output example:**
+```
+🚀 Initializing iOS FastLane Auto Deploy structure...
+
+📁 Created: apple_info/certificates/
+📁 Created: apple_info/profiles/
+📄 Created: apple_info/config.env (from template)
+
+✅ Project initialized successfully!
+
+NEXT STEPS:
+1. Add your Apple Developer credentials to apple_info/:
+   - API key file: apple_info/AuthKey_XXXXX.p8
+   - Certificates: apple_info/certificates/*.p12
+   
+2. Edit apple_info/config.env with your team details
+
+3. Run your first deployment:
+   apple-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 ```
 
 ---
