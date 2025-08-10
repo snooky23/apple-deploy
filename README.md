@@ -620,14 +620,19 @@ cat build/logs/deployment_*.log
 
 ✅ **Production-verified with successful TestFlight uploads**
 
+### Step 1: Install
 ```bash
-# Install via Homebrew
 brew tap snooky23/tools
 brew install apple-deploy
+```
 
-# Navigate to your project and deploy
+### Step 2: Initialize & Deploy
+```bash
 cd /path/to/your-ios-app
 apple-deploy init
+```
+
+```bash
 apple-deploy deploy \
     apple_info_dir="./apple_info" \
     team_id="YOUR_TEAM_ID" \
@@ -650,9 +655,11 @@ apple-deploy deploy \
 ### 🎯 Perfect For
 
 - **Development Teams** seeking reliable iOS deployment automation with 100% TestFlight success
-- **Enterprise Organizations** requiring secure, auditable deployment pipelines
-- **Startups** wanting to focus on product instead of DevOps complexity  
+- **Enterprise Organizations** requiring secure, auditable deployment pipelines  
+- **Startups** wanting to focus on product instead of DevOps complexity
 - **Consultancies** managing multiple iOS projects with different Apple Developer teams
+
+---
 
 **Production Status: FULLY OPERATIONAL** ✅
 
