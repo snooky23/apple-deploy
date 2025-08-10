@@ -73,10 +73,10 @@ class IosFastlaneAutoDeploy < Formula
     libexec.install Dir["*"]
     
     # Create wrapper with security checks
-    (bin/"ios-deploy").write secure_wrapper_script
+    (bin/"apple-deploy").write secure_wrapper_script
     
     # Set restrictive permissions
-    chmod 0755, bin/"ios-deploy"
+    chmod 0755, bin/"apple-deploy"
     
     # No system-wide configuration changes
     # No privileged file modifications
@@ -285,7 +285,7 @@ handle_error_securely() {
     local log_file="$2"
     
     # Log to secure location
-    local secure_log="/opt/homebrew/var/log/ios-deploy/deployment.log"
+    local secure_log="/opt/homebrew/var/log/apple-deploy/deployment.log"
     
     # Sanitize error message (remove sensitive data)
     local sanitized_message=$(echo "$error_message" | sed -E 's/[A-Z0-9]{32,}/[REDACTED]/g')
@@ -363,15 +363,15 @@ runtime_security_test() {
 # Test 1: Parameter injection
 test_parameter_injection() {
     # Test various injection attempts
-    ios-deploy deploy team_id="'; rm -rf /; #"
-    ios-deploy deploy app_identifier="../../../etc/passwd"
+    apple-deploy deploy team_id="'; rm -rf /; #"
+    apple-deploy deploy app_identifier="../../../etc/passwd"
 }
 
 # Test 2: Directory traversal
 test_directory_traversal() {
     # Test path traversal attempts
-    ios-deploy deploy api_key_path="../../.ssh/id_rsa"
-    ios-deploy deploy apple_info_dir="/etc/"
+    apple-deploy deploy api_key_path="../../.ssh/id_rsa"
+    apple-deploy deploy apple_info_dir="/etc/"
 }
 
 # Test 3: Privilege escalation
@@ -412,7 +412,7 @@ secure_code_signing() {
     security find-identity -v -p codesigning
     
     # Use temporary keychain for isolation
-    local temp_keychain="ios-deploy-$(date +%s).keychain"
+    local temp_keychain="apple-deploy-$(date +%s).keychain"
     security create-keychain -p "" "$temp_keychain"
     
     # Import certificates with restrictions

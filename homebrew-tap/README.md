@@ -13,14 +13,14 @@ brew install apple-deploy
 
 # Initialize your iOS project
 cd /path/to/your/ios/project
-ios-deploy init
+apple-deploy init
 ```
 
 ## Quick Start
 
 ```bash
 # Deploy to TestFlight
-ios-deploy deploy \
+apple-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   app_identifier="com.yourapp" \
   apple_id="your@email.com" \
@@ -32,8 +32,8 @@ ios-deploy deploy \
 
 ## Documentation
 
-- **Manual**: `man ios-deploy`
-- **Help**: `ios-deploy help`
+- **Manual**: `man apple-deploy`
+- **Help**: `apple-deploy help`
 - **GitHub**: https://github.com/snooky23/apple-deploy
 
 ## Features

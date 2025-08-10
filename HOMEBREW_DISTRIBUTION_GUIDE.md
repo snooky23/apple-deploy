@@ -46,9 +46,9 @@ ios-fastlane-auto-deploy/
 
 ### 2. Formula Structure
 - **Install Location**: `/opt/homebrew/libexec/ios-fastlane-auto-deploy/`
-- **CLI Wrapper**: `/opt/homebrew/bin/ios-deploy`
-- **Configuration**: `/opt/homebrew/etc/ios-deploy/`
-- **Logs**: `/opt/homebrew/var/log/ios-deploy/`
+- **CLI Wrapper**: `/opt/homebrew/bin/apple-deploy`
+- **Configuration**: `/opt/homebrew/etc/apple-deploy/`
+- **Logs**: `/opt/homebrew/var/log/apple-deploy/`
 
 ### 3. Dependency Management
 ```ruby
@@ -77,7 +77,7 @@ depends_on :macos
 
 #### 2. **Installation Process**
 - Installs entire codebase to `libexec` to avoid conflicts
-- Creates CLI wrapper script at `bin/ios-deploy`
+- Creates CLI wrapper script at `bin/apple-deploy`
 - Sets up Ruby gem environment with bundler
 - Creates configuration and logging directories
 - Installs man page documentation
@@ -89,9 +89,9 @@ depends_on :macos
 - **Error Handling**: Clear error messages and usage guidance
 
 #### 4. **Configuration Management**
-- Global configuration template at `/opt/homebrew/etc/ios-deploy/config.example`
+- Global configuration template at `/opt/homebrew/etc/apple-deploy/config.example`
 - Project-specific configuration in `./apple_info/config.env`
-- Automatic structure initialization with `ios-deploy init`
+- Automatic structure initialization with `apple-deploy init`
 
 ---
 
@@ -119,13 +119,13 @@ depends_on :macos
 brew install --build-from-source ./ios-fastlane-auto-deploy.rb
 
 # Test CLI functionality
-ios-deploy version
-ios-deploy help
+apple-deploy version
+apple-deploy help
 
 # Test in sample iOS project
 cd /path/to/ios/project
-ios-deploy init
-ios-deploy status
+apple-deploy init
+apple-deploy status
 
 # Test formula uninstallation
 brew uninstall ios-fastlane-auto-deploy
@@ -225,8 +225,8 @@ brew install ios-fastlane-auto-deploy
 ### Quick Start
 \`\`\`bash
 cd /path/to/your/ios/project
-ios-deploy init
-ios-deploy deploy team_id=\"YOUR_TEAM_ID\" app_identifier=\"com.your.app\" [...]
+apple-deploy init
+apple-deploy deploy team_id=\"YOUR_TEAM_ID\" app_identifier=\"com.your.app\" [...]
 \`\`\`
 " >> README.md
 ```
@@ -238,19 +238,19 @@ ios-deploy deploy team_id=\"YOUR_TEAM_ID\" app_identifier=\"com.your.app\" [...]
 ### Command Interface
 ```bash
 # Primary Commands
-ios-deploy deploy                  # Main deployment command
-ios-deploy build_and_upload        # Alias for deploy
-ios-deploy setup_certificates      # Certificate setup
-ios-deploy init                    # Project initialization
-ios-deploy status                  # Configuration status
-ios-deploy help                    # Usage information
-ios-deploy version                 # Version information
+apple-deploy deploy                  # Main deployment command
+apple-deploy build_and_upload        # Alias for deploy
+apple-deploy setup_certificates      # Certificate setup
+apple-deploy init                    # Project initialization
+apple-deploy status                  # Configuration status
+apple-deploy help                    # Usage information
+apple-deploy version                 # Version information
 ```
 
 ### Parameter Handling
 ```bash
 # All original parameters supported
-ios-deploy deploy \
+apple-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   app_identifier="com.myapp" \
   apple_id="dev@email.com" \
@@ -316,7 +316,7 @@ brew install ios-fastlane-auto-deploy
 cd /path/to/your/ios/project
 
 # 2. Initialize structure
-ios-deploy init
+apple-deploy init
 
 # 3. Add credentials to apple_info/
 #    - Copy AuthKey_*.p8 to apple_info/
@@ -324,7 +324,7 @@ ios-deploy init
 #    - Edit apple_info/config.env
 
 # 4. Deploy to TestFlight
-ios-deploy deploy \
+apple-deploy deploy \
   team_id="YOUR_TEAM_ID" \
   app_identifier="com.your.app" \
   apple_id="dev@email.com" \
@@ -339,13 +339,13 @@ ios-deploy deploy \
 ```bash
 # Use configuration file (recommended for teams)
 # Edit apple_info/config.env with your settings
-ios-deploy deploy  # Uses config.env values
+apple-deploy deploy  # Uses config.env values
 
 # Override with command-line parameters
-ios-deploy deploy team_id="DIFFERENT_TEAM" version_bump="major"
+apple-deploy deploy team_id="DIFFERENT_TEAM" version_bump="major"
 
 # Enhanced TestFlight monitoring
-ios-deploy deploy testflight_enhanced="true"
+apple-deploy deploy testflight_enhanced="true"
 ```
 
 ### For Developers
@@ -360,8 +360,8 @@ cd ios-fastlane-auto-deploy
 brew install --build-from-source ./ios-fastlane-auto-deploy.rb
 
 # Test functionality
-ios-deploy version
-ios-deploy help
+apple-deploy version
+apple-deploy help
 ```
 
 #### Contributing
@@ -395,9 +395,9 @@ brew install --build-from-source ./ios-fastlane-auto-deploy.rb
 brew test ios-fastlane-auto-deploy
 
 # Functionality testing
-ios-deploy version
-ios-deploy help
-ios-deploy init
+apple-deploy version
+apple-deploy help
+apple-deploy init
 
 # Cleanup testing
 brew uninstall ios-fastlane-auto-deploy
@@ -411,13 +411,13 @@ mkdir test-ios-app && cd test-ios-app
 # Add minimal Xcode project structure
 
 # Test initialization
-ios-deploy init
+apple-deploy init
 
 # Test configuration
-ios-deploy status
+apple-deploy status
 
 # Test deployment (with mock credentials)
-ios-deploy deploy team_id="TEST_TEAM_ID" app_identifier="com.test.app" \
+apple-deploy deploy team_id="TEST_TEAM_ID" app_identifier="com.test.app" \
   apple_id="test@example.com" api_key_path="test_key.p8" \
   api_key_id="TEST_KEY" api_issuer_id="test-uuid" \
   app_name="Test App" scheme="TestScheme"
@@ -491,7 +491,7 @@ ios-deploy deploy team_id="TEST_TEAM_ID" app_identifier="com.test.app" \
 ### User Benefits
 - **Simple Installation**: Single `brew install` command
 - **System Integration**: Proper CLI tool with man page
-- **Project Management**: `ios-deploy init` for easy project setup
+- **Project Management**: `apple-deploy init` for easy project setup
 - **Familiar Interface**: Consistent with other Homebrew tools
 
 ### Developer Benefits

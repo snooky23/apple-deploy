@@ -40,8 +40,8 @@ brew tap snooky23/ios-tools
 brew install apple-deploy
 
 # Test the installation
-ios-deploy version
-ios-deploy help
+apple-deploy version
+apple-deploy help
 ```
 
 ## Step 4: Update Documentation
@@ -60,7 +60,7 @@ brew install apple-deploy
 
 # Quick project setup
 cd /path/to/your-ios-app
-ios-deploy init
+apple-deploy init
 ```
 
 ## Directory Structure Required
@@ -84,10 +84,10 @@ brew audit --strict apple-deploy
 brew install --build-from-source ./Formula/apple-deploy.rb
 
 # Test all functionality
-ios-deploy version
-ios-deploy help
+apple-deploy version
+apple-deploy help
 cd /path/to/test/ios/project
-ios-deploy init
+apple-deploy init
 ```
 
 ## Notes

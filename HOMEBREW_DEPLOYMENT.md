@@ -19,10 +19,10 @@ git add .
 git commit -m "Add apple-deploy formula v2.3.0
 
 Complete Homebrew formula with:
-• CLI wrapper (ios-deploy command)
+• CLI wrapper (apple-deploy command)
 • Automatic dependency management  
 • Man page documentation
-• Project initialization (ios-deploy init)
+• Project initialization (apple-deploy init)
 • Production-verified with SHA256: d0fae043fd57..."
 git push origin main
 ```
@@ -37,22 +37,22 @@ brew tap snooky23/tools
 brew install apple-deploy
 
 # Test the CLI
-ios-deploy version  # Should show: iOS FastLane Auto Deploy v2.3.0
-ios-deploy help     # Should show complete usage information
+apple-deploy version  # Should show: iOS FastLane Auto Deploy v2.3.0
+apple-deploy help     # Should show complete usage information
 
 # Test project initialization
 cd /tmp && mkdir test-ios-app && cd test-ios-app
-ios-deploy init     # Should create apple_info/ structure
+apple-deploy init     # Should create apple_info/ structure
 ```
 
 ### Step 3: Verify Everything Works
 
 ```bash
 # Check man page
-man ios-deploy
+man apple-deploy
 
 # Check that all dependencies are installed
-ios-deploy version
+apple-deploy version
 which fastlane
 ruby --version
 ```
@@ -70,8 +70,8 @@ brew install apple-deploy
 
 ```bash
 cd /path/to/ios/project
-ios-deploy init
-ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
+apple-deploy init
+apple-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 ```
 
 ## 📋 **What's Been Prepared:**
@@ -83,10 +83,10 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 - **All dependencies**: Ruby 3.2, FastLane, optional CocoaPods & xcode-install
 
 ### ✅ **CLI Wrapper**
-- **Command**: `ios-deploy`
+- **Command**: `apple-deploy`
 - **Features**: Project validation, help, version, init, deploy, status, setup_certificates
 - **Integration**: Seamless wrapper around existing deploy.sh script
-- **Man Page**: Complete documentation accessible with `man ios-deploy`
+- **Man Page**: Complete documentation accessible with `man apple-deploy`
 
 ### ✅ **Project Structure**
 - **Tap Repository**: Ready for `snooky23/homebrew-tools`
@@ -95,7 +95,7 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 
 ### ✅ **Updated Main Documentation**
 - **Primary Installation**: Now shows Homebrew as recommended method
-- **All Examples**: Updated to use `ios-deploy` commands
+- **All Examples**: Updated to use `apple-deploy` commands
 - **Fallback**: Still provides manual installation for edge cases
 - **Parameter Fixes**: Correctly shows `api_key_path` as optional
 
@@ -103,9 +103,9 @@ ios-deploy deploy team_id="YOUR_TEAM_ID" app_identifier="com.your.app" [...]
 
 - **📦 Easy Installation**: Single `brew install` command
 - **🔧 Automatic Dependencies**: Ruby, gems, and tools installed automatically
-- **⚙️ Project Validation**: `ios-deploy` ensures you're in an iOS project directory
-- **📖 Built-in Documentation**: `ios-deploy help` and `man ios-deploy`
-- **🚀 Quick Setup**: `ios-deploy init` creates proper directory structure
+- **⚙️ Project Validation**: `apple-deploy` ensures you're in an iOS project directory
+- **📖 Built-in Documentation**: `apple-deploy help` and `man apple-deploy`
+- **🚀 Quick Setup**: `apple-deploy init` creates proper directory structure
 - **✅ System Integration**: Works with other Homebrew packages
 
 ## 📞 **Support & Next Steps:**
