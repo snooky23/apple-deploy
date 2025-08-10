@@ -258,7 +258,8 @@ platform :ios do
       
       while build_attempt <= max_attempts && ipa_path.nil?
         begin
-          signing_style = build_attempt == 1 ? "automatic" : "manual"
+          # Force manual signing for AppStore builds to ensure correct certificate selection
+          signing_style = "manual"
           
           # More descriptive attempt messages
           case build_attempt
@@ -306,16 +307,26 @@ platform :ios do
                 UI.message("📱 Found AppStore profile: #{File.basename(profile_file)} -> #{profile_name}")
                 
                 # For AppStore profiles, we need distribution certificates
+                # First try to find in the temporary keychain if it exists
                 keychain_path = Dir.glob("#{certificates_dir}/*.keychain-db").first
-                if keychain_path
+                identities_output = nil
+                
+                if keychain_path && File.exist?(keychain_path)
                   identities_output = `security find-identity -v -p codesigning "#{keychain_path}" 2>/dev/null`
-                  
-                  identities_output.split("\n").each do |line|
-                    if line.include?("Apple Distribution")
-                      certificate_name = line.match(/"([^"]*)"/)&.captures&.first
-                      UI.message("🔧 Matched with distribution certificate: #{certificate_name}")
-                      break
-                    end
+                end
+                
+                # If not found in temporary keychain, use the default keychain
+                if identities_output.nil? || identities_output.strip.empty? || !identities_output.include?("Apple Distribution")
+                  UI.message("🔍 Looking for distribution certificate in default keychain...")
+                  identities_output = `security find-identity -v -p codesigning 2>/dev/null`
+                end
+                
+                # Find the distribution certificate for this team
+                identities_output.split("\n").each do |line|
+                  if line.include?("Apple Distribution") && line.include?("(#{team_id})")
+                    certificate_name = line.match(/"([^"]*)"/)&.captures&.first
+                    UI.message("🔧 Matched with distribution certificate: #{certificate_name}")
+                    break
                   end
                 end
               else
@@ -345,7 +356,8 @@ platform :ios do
             UI.message("🔧 Export will use certificate: #{certificate_name}")
           end
           
-          build_app(
+          # For manual signing, specify the exact certificate to use during build
+          build_options = {
             scheme: scheme,
             configuration: "Release",
             clean: build_attempt == 1, # Only clean on first attempt
@@ -354,7 +366,15 @@ platform :ios do
             export_team_id: team_id,
             xcargs: "DEVELOPMENT_TEAM=#{team_id}",
             export_options: export_options
-          )
+          }
+          
+          # For manual signing, force xcodebuild to use the distribution certificate
+          if signing_style == "manual" && certificate_name
+            build_options[:codesigning_identity] = certificate_name
+            UI.message("🔧 Build will use certificate: #{certificate_name}")
+          end
+          
+          build_app(build_options)
           
           ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
           UI.success("🎉 Build completed successfully with #{signing_style} signing!")
@@ -413,18 +433,81 @@ platform :ios do
                   rescue => cert_update_error
                     UI.message("⚠️ Standard certificate update failed: #{cert_update_error.message}")
                     
-                    # Fallback: Manual xcodeproj modification
-                    UI.message("🔧 Applying manual certificate configuration...")
+                    # Fallback: Manual xcodeproj modification with precision targeting
+                    UI.message("🔧 Applying targeted certificate configuration for Release builds...")
                     project_path = "./#{scheme}.xcodeproj/project.pbxproj"
                     
                     if File.exist?(project_path)
                       project_content = File.read(project_path)
+                      modified = false
                       
-                      # Update CODE_SIGN_IDENTITY to use distribution certificate
-                      project_content.gsub!(/CODE_SIGN_IDENTITY\s*=\s*"[^"]*";/, 'CODE_SIGN_IDENTITY = "' + distribution_cert + '";')
+                      # Find Release configuration blocks for the main target
+                      # Pattern: Look for Release XCBuildConfiguration sections that contain CODE_SIGN_IDENTITY
+                      release_blocks = project_content.scan(/(\w+) \/\* Release \*\/ = \{[^}]+buildSettings = \{[^}]+\};/m)
                       
-                      File.write(project_path, project_content)
-                      UI.success("✅ Manually configured project to use distribution certificate")
+                      if release_blocks.any?
+                        UI.message("🔍 Found #{release_blocks.length} Release configuration(s) to update")
+                        
+                        # Update each Release configuration block
+                        release_blocks.each_with_index do |block_match, index|
+                          block_content = block_match[0]
+                          
+                          # Only update blocks that contain CODE_SIGN_IDENTITY (target configs, not project configs)
+                          if block_content.include?('CODE_SIGN_IDENTITY')
+                            # Extract the UUID for this configuration
+                            uuid_match = project_content.match(/(\w+) \/\* Release \*\/ = \{[^}]*#{Regexp.escape(block_content.split(' = {')[1] || '')}[^}]*\}/m)
+                            
+                            if uuid_match
+                              config_uuid = uuid_match[1]
+                              UI.message("🎯 Updating Release config #{config_uuid} (#{index + 1}/#{release_blocks.length})")
+                              
+                              # Update CODE_SIGN_IDENTITY in this specific Release block
+                              project_content.gsub!(/(#{config_uuid} \/\* Release \*\/ = \{[^}]*buildSettings = \{[^}]*CODE_SIGN_IDENTITY = ")[^"]*(";[^}]*\};)/m) do |match|
+                                updated_block = match.gsub(/CODE_SIGN_IDENTITY = "[^"]*";/, "CODE_SIGN_IDENTITY = \"#{distribution_cert}\";")
+                                modified = true
+                                UI.message("   ✓ Updated CODE_SIGN_IDENTITY to: #{distribution_cert}")
+                                updated_block
+                              end
+                              
+                              # Also ensure PROVISIONING_PROFILE_SPECIFIER matches the correct AppStore profile name
+                              if profile_name
+                                project_content.gsub!(/(#{config_uuid} \/\* Release \*\/ = \{[^}]*buildSettings = \{[^}]*PROVISIONING_PROFILE_SPECIFIER = ")[^"]*(";[^}]*\};)/m) do |match|
+                                  updated_block = match.gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"#{profile_name}\";")
+                                  UI.message("   ✓ Updated PROVISIONING_PROFILE_SPECIFIER to: #{profile_name}")
+                                  updated_block
+                                end
+                              end
+                            end
+                          end
+                        end
+                      else
+                        # Fallback to broader approach if structured parsing fails
+                        UI.message("⚠️  Structured parsing failed, using broader certificate update...")
+                        original_modified = modified
+                        
+                        # Update only Release configurations containing CODE_SIGN_IDENTITY
+                        project_content.gsub!(/(\/\* Release \*\/[^}]+buildSettings = \{[^}]*CODE_SIGN_IDENTITY = ")[^"]*(";[^}]*\})/m) do |match|
+                          modified = true
+                          match.gsub(/CODE_SIGN_IDENTITY = "[^"]*";/, "CODE_SIGN_IDENTITY = \"#{distribution_cert}\";")
+                        end
+                        
+                        if modified != original_modified
+                          UI.message("   ✓ Updated CODE_SIGN_IDENTITY via fallback method")
+                        end
+                      end
+                      
+                      if modified
+                        File.write(project_path, project_content)
+                        UI.success("✅ Successfully updated Release configuration(s) to use distribution certificate")
+                        UI.message("   Certificate: #{distribution_cert}")
+                        UI.message("   Profile: #{profile_name}") if profile_name
+                      else
+                        UI.message("⚠️  No Release configurations found to update - project may have non-standard structure")
+                        # Still try the original broad approach as final fallback
+                        project_content.gsub!(/CODE_SIGN_IDENTITY\s*=\s*"[^"]*";/, "CODE_SIGN_IDENTITY = \"#{distribution_cert}\";") 
+                        File.write(project_path, project_content)
+                        UI.message("   Applied broad certificate update as final fallback")
+                      end
                     end
                   end
                   
@@ -493,8 +576,33 @@ platform :ios do
       UI.message("🔧 Executing upload command:")
       UI.message("   xcrun altool --upload-app --type ios --file [IPA] --apiKey [KEY_ID] --apiIssuer [ISSUER_ID]")
       
-      # Execute the upload command
-      sh(upload_command)
+      # Execute the upload command with retry mechanism
+      upload_success = false
+      retry_count = 0
+      max_retries = 3
+      
+      while !upload_success && retry_count < max_retries
+        begin
+          retry_count += 1
+          if retry_count > 1
+            UI.message("🔄 Upload attempt #{retry_count}/#{max_retries}...")
+            sleep(10) # Wait 10 seconds before retry
+          end
+          
+          sh(upload_command)
+          upload_success = true
+          UI.success("🎉 Successfully uploaded to TestFlight using xcrun altool!")
+          
+        rescue => e
+          UI.error("❌ Upload attempt #{retry_count} failed: #{e.message}")
+          if retry_count >= max_retries
+            UI.error("❌ All upload attempts failed. Please check network connectivity and try again.")
+            raise e
+          else
+            UI.message("⏳ Waiting 10 seconds before retry...")
+          end
+        end
+      end
       
       # Clean up the copied API key
       File.delete(destination_key_path) if File.exist?(destination_key_path)

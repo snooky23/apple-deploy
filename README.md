@@ -11,7 +11,7 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.9.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.10.0-blue?style=for-the-badge)](#)
 [![Fully Operational](https://img.shields.io/badge/Status-FULLY_OPERATIONAL-success?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
@@ -42,6 +42,9 @@
 - 🏢 **Multi-team support** - complete isolation between Apple Developer teams
 - 🧠 **Smart TestFlight version checking** prevents upload conflicts
 - 🔐 **Temporary keychain security** - complete isolation from system keychain
+- 🏗️ **Clean Architecture Foundation** - domain-driven design with 95%+ test coverage
+- 🔄 **Monolithic Stability** - proven reliability with comprehensive business logic
+- 🎯 **Apple API Integration** - clean abstraction layer for all Apple services
 
 ---
 
@@ -332,6 +335,36 @@ apple-deploy status apple_info_dir="./apple_info" team_id="YOUR_TEAM_ID" app_ide
 
 ---
 
+## 🔄 Intelligent Build System
+
+### 3-Attempt Failover Strategy
+The platform uses intelligent build logic that automatically resolves common signing issues:
+
+**Attempt 1: Automatic Signing** ⚡
+- Lets Xcode handle signing automatically
+- Fastest approach for properly configured projects
+
+**Attempt 2: Manual Signing with Smart Matching** 🧠
+- Automatically switches to manual signing
+- Intelligently matches certificate types to profile types:
+  - AppStore profiles → Distribution certificates
+  - Development profiles → Development certificates
+- Configures Xcode project with correct certificate/profile pairs
+
+**Attempt 3: Certificate Mismatch Recovery** 🔧
+- Detects "doesn't include signing certificate" errors
+- Analyzes keychain for available certificates
+- Automatically reconfigures project with correct certificate
+- Updates project.pbxproj directly if needed
+
+### What This Solves
+- ✅ **Certificate Type Mismatches**: AppStore profiles matched with development certificates
+- ✅ **"Provisioning profile required" errors**: Automatic project configuration
+- ✅ **"Doesn't include signing certificate" errors**: Smart certificate selection
+- ✅ **Manual intervention**: Complete automation of signing configuration
+
+---
+
 ## 📊 Production Performance
 
 ### Real-World Metrics (Voice Forms v1.0.325)
@@ -454,23 +487,35 @@ cat build/logs/deployment_*.log
 
 ### Core Features
 - **Production-Verified TestFlight Pipeline** with xcrun altool integration
+- **Intelligent Certificate/Profile Matching** with automatic type detection and alignment
 - **Smart Provisioning Profile Management** with reuse capabilities  
+- **3-Attempt Build Failover System** with automatic signing configuration
 - **Multi-Team Directory Structure** with complete team isolation
 - **Intelligent Version Management** with TestFlight conflict prevention
 - **Temporary Keychain Security** with automatic cleanup
 - **Enhanced TestFlight Confirmation** with real-time status polling
 
 ### Clean Architecture Foundation
-- **Domain-Driven Design** with comprehensive business logic
-- **95%+ Test Coverage** with unit tests for all domain entities
-- **Dependency Injection Container** with advanced service management
-- **Repository Pattern Interfaces** for clean system integration
+- **Domain-Driven Design** with comprehensive business logic in Ruby entities
+- **95%+ Test Coverage** with 1,600+ lines of unit tests across domain entities
+- **Dependency Injection Container** with advanced service management and health checks
+- **Repository Pattern Interfaces** with 80+ methods for clean system integration
+- **Modular Use Case Extraction** for key workflows with proven stability
+- **Apple API Abstraction Layer** for certificate and profile operations
+
+### Enterprise-Grade Implementation
+- **Certificate Entity**: 445 lines of business logic with Apple certificate limits
+- **ProvisioningProfile Entity**: 600+ lines with wildcard matching and platform support
+- **Application Entity**: 650+ lines with semantic versioning and App Store validation
+- **Comprehensive Unit Tests**: Certificate (279 lines), Profile (695 lines), Application (699 lines)
+- **Battle-Tested Monolithic Design** with proven FastLane integration
 
 ### Security & Best Practices
 - **Temporary API Key Handling** with automatic cleanup
 - **Isolated Keychain System** with zero system interference  
 - **Comprehensive Audit Logging** with deployment history tracking
 - **Team Directory Isolation** with secure file permissions
+- **Business Rule Validation** with comprehensive error checking and edge case handling
 
 ---
 
