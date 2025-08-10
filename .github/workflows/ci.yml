@@ -99,12 +99,41 @@ jobs:
         
     - name: Check for hardcoded secrets
       run: |
-        # Check for potential API keys, passwords, etc.
-        if grep -r -i "api.*key.*=" scripts/ --include="*.rb" --include="*.sh"; then
-          echo "⚠️ Potential hardcoded API keys found"
+        echo "🔍 Scanning for hardcoded secrets..."
+        
+        # Look for actual secret values, not variable names or documentation
+        SECRET_FOUND=false
+        
+        # Check for potential hardcoded API keys (actual values, not variable assignments)
+        if grep -r -E "api[_-]?key[_-]?[[:space:]]*=[[:space:]]*['\"][A-Za-z0-9+/]{20,}['\"]" scripts/ --include="*.rb" --include="*.sh" 2>/dev/null; then
+          echo "❌ Potential hardcoded API key values found"
+          SECRET_FOUND=true
+        fi
+        
+        # Check for hardcoded passwords (actual values)
+        if grep -r -E "password[_-]?[[:space:]]*=[[:space:]]*['\"][^'\"]{6,}['\"]" scripts/ --include="*.rb" --include="*.sh" 2>/dev/null; then
+          echo "❌ Potential hardcoded password values found"  
+          SECRET_FOUND=true
+        fi
+        
+        # Check for hardcoded tokens (actual values)
+        if grep -r -E "token[_-]?[[:space:]]*=[[:space:]]*['\"][A-Za-z0-9+/]{30,}['\"]" scripts/ --include="*.rb" --include="*.sh" 2>/dev/null; then
+          echo "❌ Potential hardcoded token values found"
+          SECRET_FOUND=true
+        fi
+        
+        # Check for Base64-like strings that might be secrets (but exclude common patterns)
+        if grep -r -E "['\"][A-Za-z0-9+/]{40,}={0,2}['\"]" scripts/ --include="*.rb" --include="*.sh" | grep -v -E "(example|test|sample|YOUR_|XXXXX)" 2>/dev/null; then
+          echo "⚠️ Potential Base64-encoded secrets found (review manually)"
+          # Don't fail on this one as it might be legitimate
+        fi
+        
+        if [ "$SECRET_FOUND" = true ]; then
+          echo "❌ Hardcoded secrets detected - please use environment variables or secure storage"
           exit 1
         fi
-        echo "✅ No hardcoded secrets detected"
+        
+        echo "✅ No hardcoded secret values detected (variable names and documentation are OK)"
         
     - name: Validate documentation links
       run: |
