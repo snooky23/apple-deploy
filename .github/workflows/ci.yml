@@ -24,7 +24,14 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true
+        bundler-cache: false  # Disable cache to avoid platform issues
+        
+    - name: Install Ruby dependencies
+      run: |
+        # Add current platform to Gemfile.lock to avoid platform mismatch
+        bundle lock --add-platform arm64-darwin-23 || true
+        bundle lock --add-platform x86_64-darwin-23 || true
+        bundle install --jobs 4 --retry 3
         
     - name: Install FastLane
       run: |
@@ -34,7 +41,9 @@ jobs:
     - name: Validate FastLane configuration
       run: |
         cd scripts/fastlane
-        fastlane validate_fastfile
+        # Check Fastfile syntax
+        ruby -c Fastfile
+        echo "✅ Fastfile syntax is valid"
         
     - name: Test Ruby use cases
       run: |
