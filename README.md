@@ -237,7 +237,6 @@ NEXT STEPS:
 
 ### 🔴 Mandatory Parameters
 ```bash
-apple_info_dir="/path/to/secure/apple_info"  # Apple credentials directory (absolute path)
 team_id="YOUR_TEAM_ID"                       # Apple Developer Team ID (10-character)
 app_identifier="com.yourcompany.app"         # Bundle identifier (reverse DNS)
 apple_id="your@email.com"                   # Apple Developer account email
@@ -249,6 +248,10 @@ scheme="YourScheme"                          # Xcode build scheme name
 
 ### 🟡 Optional Parameters
 ```bash
+# Apple Credentials Directory
+apple_info_dir="./apple_info"                # Apple credentials directory (default: ./apple_info)
+apple_info_dir="/path/to/shared/apple_info"  # Or absolute path for shared/custom locations
+
 # API Key (auto-detected if not specified)
 api_key_path="AuthKey_XXXXX.p8"              # API key filename (auto-detected)
 
@@ -621,7 +624,7 @@ cat build/logs/deployment_*.log
 
 ## 🚀 Ready to Transform Your iOS Workflow?
 
-**Deploy your next iOS app in 1 minute instead of 4 hours**
+**Deploy your iOS app in 1 minute instead of 4 hours**
 
 ✅ **Production-verified with successful TestFlight uploads**
 
