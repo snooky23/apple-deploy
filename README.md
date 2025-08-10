@@ -670,4 +670,13 @@ apple-deploy deploy \
 
 *Built for enterprise teams. Production-verified.*
 
+---
+
+## 📚 **Documentation**
+
+- **📖 Complete Setup Guide**: [docs/setup.md](docs/setup.md) - Detailed setup from Apple account to deployment
+- **🏗️ Technical Architecture**: [docs/architecture.md](docs/architecture.md) - Clean Architecture implementation details  
+- **🔒 Security Practices**: [docs/security.md](docs/security.md) - Enterprise security guidelines
+- **🐛 Report Issues**: [GitHub Issues](https://github.com/snooky23/apple-deploy/issues)
+
 </div>

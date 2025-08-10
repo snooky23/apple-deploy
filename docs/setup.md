@@ -316,9 +316,9 @@ After successful setup, you can:
 
 ## 📞 **Support**
 
-- **Documentation**: [README.md](README.md) for complete reference
-- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
-- **Security**: [SECURITY_GUIDE.md](SECURITY_GUIDE.md) for security practices
+- **Documentation**: [README.md](../README.md) for complete reference
+- **Architecture**: [architecture.md](architecture.md) for technical details
+- **Security**: [security.md](security.md) for security practices
 - **Issues**: [GitHub Issues](https://github.com/snooky23/apple-deploy/issues)
 
 ---
