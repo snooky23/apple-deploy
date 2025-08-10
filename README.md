@@ -207,27 +207,36 @@ apple-deploy status \
 ```
 
 ### 🏗️ `apple-deploy init` - Initialize Project Structure
-**What it does:** Sets up the apple_info directory structure in your project
+**What it does:** Sets up the apple_info directory structure in current directory
 - ✅ Creates `apple_info/` directory with proper structure
-- ✅ Generates `config.env` template with your team settings
+- ✅ Generates `config.env` template with your team settings  
 - ✅ Creates subdirectories for certificates and profiles
 - ✅ Provides next-steps guidance
 
+> **💡 Pro Tip:** You can run this **anywhere** - in your iOS project, in a shared team directory, or in a dedicated credentials folder. No Xcode project required!
+
 ```bash
-# Run from your iOS project root directory
+# Option 1: Initialize in your iOS project directory
 cd /path/to/MyAwesomeApp
+apple-deploy init
+
+# Option 2: Initialize in a shared credentials directory
+cd /shared/ios-team-credentials
+apple-deploy init
+
+# Option 3: Initialize anywhere you want to store Apple credentials
+mkdir ~/my-ios-credentials && cd ~/my-ios-credentials
 apple-deploy init
 ```
 
 **What it creates:**
 ```
-MyAwesomeApp/
-├── MyApp.xcodeproj
+current-directory/
 ├── apple_info/                    # 📁 Created by init
 │   ├── certificates/              # 📁 For .p12 files
 │   ├── profiles/                  # 📁 For .mobileprovision files
 │   └── config.env                 # 📄 Template configuration
-└── fastlane/                      # 📁 Runtime scripts (auto-copied)
+└── (other files in current directory remain unchanged)
 ```
 
 **Output example:**
