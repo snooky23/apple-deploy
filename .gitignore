@@ -82,3 +82,9 @@ certificates/config.env.backup*
 # Deployment logs (can be large and sensitive)
 deployment_*.log
 fastlane_*.log
+
+# Test iOS projects and template apps (sensitive/personal data)
+template_swiftui/
+*_swiftui/
+test_app/
+example_app/
