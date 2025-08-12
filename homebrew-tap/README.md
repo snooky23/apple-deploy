@@ -1,12 +1,12 @@
-# Homebrew Tap for iOS Deploy Platform
+# Homebrew Tap for Apple Deploy
 
-This is the official Homebrew tap for the iOS Deploy Platform.
+This is the official Homebrew tap for Apple Deploy.
 
 ## Installation
 
 ```bash
 # Add the tap
-brew tap snooky23/ios-tools
+brew tap snooky23/tools
 
 # Install the platform
 brew install apple-deploy

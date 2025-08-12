@@ -1,6 +1,6 @@
-# iOS FastLane Deployment - Complete Testing Scenarios
+# Apple Deploy - Complete Testing Scenarios
 
-This document outlines all possible states, scenarios, and test cases for the iOS FastLane automation platform.
+This document outlines all possible states, scenarios, and test cases for the Apple Deploy automation platform.
 
 ## 🎯 **CORE TESTING CATEGORIES**
 
@@ -258,4 +258,4 @@ This document outlines all possible states, scenarios, and test cases for the iO
 
 ---
 
-This comprehensive testing framework ensures robust validation of the iOS FastLane automation platform across all possible states and scenarios.
+This comprehensive testing framework ensures robust validation of the Apple Deploy automation platform across all possible states and scenarios.

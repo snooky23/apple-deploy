@@ -212,7 +212,7 @@ current-directory/
 
 **Output example:**
 ```
-🚀 Initializing iOS FastLane Auto Deploy structure...
+🚀 Initializing Apple Deploy structure...
 
 📁 Created: apple_info/certificates/
 📁 Created: apple_info/profiles/
