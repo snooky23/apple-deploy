@@ -704,6 +704,12 @@ platform :ios do
     # Cleanup temporary keychain using clean architecture
     if !temp_keychain_path.nil?
       setup_keychain_use_case = SetupKeychain.new
+      
+      # Ensure cleanup happens even if script exits unexpectedly
+      at_exit do
+        setup_keychain_use_case.cleanup_keychain(temp_keychain_path) if temp_keychain_path
+      end
+      
       cleanup_success = setup_keychain_use_case.cleanup_keychain(temp_keychain_path)
       
       unless cleanup_success

@@ -120,19 +120,40 @@ class SetupKeychain
     @logger.info("Keychain path: #{keychain_path}")
     
     begin
+      # Clean up keychain and related files
+      cleanup_performed = false
+      
       if File.exist?(keychain_path)
         # Remove keychain from security framework
         result = system("security delete-keychain '#{keychain_path}' 2>/dev/null")
         
-        # Remove file if it still exists
+        # Remove the main keychain-db file if it still exists
         File.delete(keychain_path) if File.exist?(keychain_path)
-        
-        @logger.success("Temporary keychain cleaned up successfully")
-        true
-      else
-        @logger.info("Keychain file does not exist, cleanup not needed")
-        true
+        cleanup_performed = true
       end
+      
+      # Clean up companion keychain files (.ff* files and others)
+      keychain_dir = File.dirname(keychain_path)
+      keychain_name = File.basename(keychain_path, '.keychain-db')
+      
+      companion_files = Dir.glob(File.join(keychain_dir, "#{keychain_name}.*"))
+      companion_files += Dir.glob(File.join(keychain_dir, ".ff*"))  # FastLane temporary files
+      
+      companion_files.each do |file|
+        if File.exist?(file) && file != keychain_path
+          File.delete(file)
+          @logger.debug("Cleaned up companion file: #{File.basename(file)}")
+          cleanup_performed = true
+        end
+      end
+      
+      if cleanup_performed
+        @logger.success("Temporary keychain and companion files cleaned up successfully")
+      else
+        @logger.info("No keychain files found, cleanup not needed")
+      end
+      
+      true
       
     rescue => e
       @logger.warn("Keychain cleanup failed: #{e.message}")
