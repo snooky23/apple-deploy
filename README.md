@@ -11,7 +11,7 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.11.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.12.0-blue?style=for-the-badge)](#)
 [![Fully Operational](https://img.shields.io/badge/Status-FULLY_OPERATIONAL-success?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
@@ -620,14 +620,19 @@ cat build/logs/deployment_*.log
 
 ---
 
-## 📈 What's New in v2.11.0
+## 📈 What's New in v2.12.0
 
 ### 🔥 Latest Improvements (August 2025)
+- **✅ Command Alignment** - Changed command from `ios-deploy` to `apple-deploy` for consistency
+- **🚀 Unified Branding** - All references now use "Apple Deploy" instead of "iOS FastLane Auto Deploy"
+- **📊 Version Management** - Updated all components to v2.12.0 for consistency
+- **🔧 Enhanced User Experience** - Cleaner command interface aligned with package name
+- **📚 Documentation Updates** - All docs updated to reflect new command structure
+
+### Previous Improvements (v2.11.0)
 - **✅ Homebrew Installation Fixed** - Resolved file overwrite conflicts during installation
-- **🚀 Enhanced Error Handling** - Improved installation process with better cleanup
-- **📊 Version Management** - Updated all components to v2.11.0 for consistency
-- **🔧 Production Stability** - Additional testing and validation of core features
-- **📚 Documentation Updates** - Improved installation instructions and troubleshooting
+- **🚀 Enhanced Keychain Cleanup** - Fixed .ff* temporary file accumulation issues
+- **📊 Improved Error Handling** - Better cleanup and installation process
 
 ### Recent Platform Achievements
 - **✅ 100% TestFlight Success Rate** - Proven end-to-end deployment capability
