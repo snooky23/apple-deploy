@@ -11,7 +11,7 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.12.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.12.2-blue?style=for-the-badge)](#)
 [![Fully Operational](https://img.shields.io/badge/Status-FULLY_OPERATIONAL-success?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
@@ -620,11 +620,16 @@ cat build/logs/deployment_*.log
 
 ---
 
-## 📈 What's New in v2.12.1
+## 📈 What's New in v2.12.2
 
 ### 🔥 Latest Improvements (August 2025)
+- **✅ Critical Working Directory Fix** - Fixed CLI wrapper to run deploy.sh from user's project directory
+- **🚀 Proper Command Execution** - Removed incorrect `cd` that was changing to installation directory
+- **🔧 Fixed Deployment Flow** - apple-deploy commands now work correctly from iOS project directories
+
+### Previous Improvements (v2.12.1)
 - **✅ Project Detection Fix** - Fixed iOS project directory detection for proper .xcodeproj recognition
-- **🚀 Enhanced CLI Validation** - Improved project structure validation in apple-deploy command
+- **🚀 Enhanced CLI Validation** - Improved project structure validation in apple-deploy command  
 - **🔧 Better Error Messages** - Clearer feedback when not in iOS project directory
 
 ### Previous Improvements (v2.12.0)
