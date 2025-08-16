@@ -606,6 +606,60 @@ apple-deploy deploy \
 ```
 </details>
 
+<details>
+<summary><strong>🚨 "Invalid trust settings" Certificate Error (FIXED in v2.12.3)</strong></summary>
+
+**Error Message:**
+```bash
+❌ Invalid trust settings. Restore system default trust settings for certificate 
+   "Apple Distribution: Your Name (TEAM_ID)" in order to sign code with it.
+```
+
+**What This Means:**
+CI/CD environments and some developer machines reject certificates for code signing due to security restrictions, even when certificates are valid.
+
+**✅ AUTOMATICALLY FIXED in v2.12.3:**
+- **Universal certificate trust solution** works automatically in background
+- **Zero configuration required** - applies to all projects and teams  
+- **CI/CD compatible** - completely non-interactive operation
+- **Works with all certificate types** - Development, Distribution, Enterprise
+
+**How to Get the Fix:**
+```bash
+# Upgrade to v2.12.3
+brew upgrade apple-deploy
+
+# Verify version
+apple-deploy version  # Should show v2.12.3+
+```
+
+**Note:** This fix is automatic and requires no configuration. It works silently during certificate setup.
+</details>
+
+<details>
+<summary><strong>🚨 "Not in an iOS project directory" Error (FIXED in v2.12.2)</strong></summary>
+
+**Error Message:**
+```bash
+❌ Error: Not in an iOS project directory
+   Please run this command from your iOS project root directory
+```
+
+**✅ FIXED in v2.12.2:**
+- **Improved project detection** works correctly from any valid iOS project
+- **Enhanced working directory handling** prevents location confusion
+
+**How to Get the Fix:**
+```bash
+# Upgrade to v2.12.2+
+brew upgrade apple-deploy
+
+# Test from your iOS project directory
+cd /path/to/your-ios-project
+apple-deploy help  # Should work without errors
+```
+</details>
+
 ### Still Having Issues?
 
 **Enable detailed logging:**
@@ -711,36 +765,6 @@ CI/CD environments often failed with certificate trust errors during code signin
 - **✅ Enhanced Processing Monitoring** - Real-time TestFlight build status tracking
 - **✅ Smart Version Conflict Resolution** - Automatic handling of build number conflicts
 - **✅ Multi-Team Directory Structure** - Complete team isolation and collaboration support
-
----
-
-## 🛠️ Troubleshooting Fixed Issues
-
-### ❌ "Not in an iOS project directory" Error (FIXED in v2.12.1)
-```bash
-# OLD ERROR: Even when in valid iOS project directory
-❌ Error: Not in an iOS project directory
-   Please run this command from your iOS project root directory
-```
-**Solution:** Update to v2.12.1+ - Fixed project detection logic.
-
-### ❌ "No Xcode project or workspace found" Error (FIXED in v2.12.2)  
-```bash
-# OLD ERROR: apple-deploy running from wrong directory
-🔍 PROBLEM: No Xcode project or workspace found
-💡 Current directory: /opt/homebrew/Cellar/apple-deploy/2.12.1/libexec
-```
-**Solution:** Update to v2.12.2+ - Fixed working directory issue.
-
-### 🔧 How to Verify You Have the Fixes
-```bash
-# Check version (should be v2.12.3+)
-apple-deploy version
-
-# Test from your iOS project directory
-cd /path/to/your-ios-project
-apple-deploy help  # Should work without errors
-```
 
 ---
 
