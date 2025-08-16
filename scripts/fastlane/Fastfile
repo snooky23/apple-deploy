@@ -705,9 +705,13 @@ platform :ios do
     if !temp_keychain_path.nil?
       setup_keychain_use_case = SetupKeychain.new
       
-      # Ensure cleanup happens even if script exits unexpectedly
+      # Ensure cleanup happens even if script exits unexpectedly (enhanced with error handling)
       at_exit do
-        setup_keychain_use_case.cleanup_keychain(temp_keychain_path) if temp_keychain_path
+        begin
+          setup_keychain_use_case.cleanup_keychain(temp_keychain_path) if temp_keychain_path
+        rescue => e
+          UI.message("⚠️  Emergency keychain cleanup failed: #{e.message}")
+        end
       end
       
       cleanup_success = setup_keychain_use_case.cleanup_keychain(temp_keychain_path)

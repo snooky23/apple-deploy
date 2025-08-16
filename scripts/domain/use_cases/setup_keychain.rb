@@ -124,8 +124,8 @@ class SetupKeychain
       cleanup_performed = false
       
       if File.exist?(keychain_path)
-        # Remove keychain from security framework
-        result = system("security delete-keychain '#{keychain_path}' 2>/dev/null")
+        # Remove keychain from security framework (non-interactive for CI/CD)
+        result = system("security delete-keychain '#{keychain_path}' 2>/dev/null || true")
         
         # Remove the main keychain-db file if it still exists
         File.delete(keychain_path) if File.exist?(keychain_path)
@@ -206,6 +206,9 @@ class SetupKeychain
     result = system("security unlock-keychain -p '#{password}' '#{keychain_path}'")
     raise KeychainCreationError.new("Failed to unlock keychain") unless result
     
+    # Set certificate trust permissions for code signing
+    set_keychain_certificate_trust(keychain_path)
+    
     @logger.success("Temporary keychain created and configured")
     @logger.info("This avoids system keychain permissions issues in CI/CD")
   end
@@ -272,6 +275,31 @@ class SetupKeychain
     end
     
     imported_certificates
+  end
+  
+  # Generic solution: Set certificate trust permissions for any keychain
+  # This fixes "Invalid trust settings" errors for code signing
+  # Works with any keychain path and any certificates imported
+  def set_keychain_certificate_trust(keychain_path)
+    @logger.info("Setting certificate trust permissions for code signing")
+    
+    begin
+      # Universal fix: Allow Apple tools, codesign, and security to access certificates
+      # This works for ANY certificates imported into the keychain
+      # -k '' uses empty password (non-interactive for CI/CD)
+      result = system("security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '' '#{keychain_path}' 2>/dev/null")
+      
+      if result
+        @logger.success("Certificate trust permissions set successfully")
+        @logger.info("All certificates in keychain can now be used for code signing")
+      else
+        @logger.warn("Could not set certificate trust permissions")
+        @logger.info("Build may fail with 'Invalid trust settings' error")
+      end
+    rescue => e
+      @logger.warn("Error setting certificate trust: #{e.message}")
+      @logger.info("Continuing - manual certificate trust may be required")
+    end
   end
   
   def verify_available_identities(keychain_path)
