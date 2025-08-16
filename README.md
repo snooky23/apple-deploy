@@ -592,6 +592,30 @@ cat build/logs/deployment_*.log
 
 ---
 
+## 🛡️ v2.12.3 Technical Implementation Notes
+
+### Certificate Trust Fix
+**PROBLEM SOLVED:** "Invalid trust settings. Restore system default trust settings for certificate" errors
+
+#### What Was the Issue?
+CI/CD environments often failed with certificate trust errors during code signing, even when certificates were valid and properly imported.
+
+#### Universal Solution Implemented
+- **Generic certificate trust permissions** via `security set-key-partition-list`
+- **Works with ANY keychain path** and ANY certificates
+- **CI/CD compatible** - completely non-interactive operation  
+- **Emergency keychain cleanup** - prevents accumulation in failed deployments
+- **Bulletproof error handling** - graceful degradation if trust setting fails
+
+#### Code Location
+- **Core Implementation**: `scripts/domain/use_cases/setup_keychain.rb:283-302`
+- **Integration Point**: Runs automatically after keychain creation
+- **Zero Configuration** - works out of the box for all projects and teams
+
+**Result**: Universal fix that resolves certificate trust issues across all iOS projects, certificate types, and CI/CD environments.
+
+---
+
 ## 🏛️ Technical Architecture
 
 ### Core Features
