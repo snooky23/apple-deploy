@@ -51,6 +51,33 @@
 
 ---
 
+## 🛡️ What's New in v2.12.3
+
+### 🔥 **Universal Certificate Trust Fix**
+**PROBLEM SOLVED:** "Invalid trust settings. Restore system default trust settings for certificate" errors in CI/CD environments
+
+**NEW FEATURES:**
+- ✅ **Automatic certificate trust configuration** - works silently in the background
+- ✅ **Universal CI/CD compatibility** - seamless integration with Jenkins, GitHub Actions, GitLab CI, etc.
+- ✅ **Zero configuration required** - fix applies automatically to all projects and teams
+- ✅ **Enhanced keychain security** - bulletproof cleanup and emergency fallback handling
+- ✅ **Non-interactive operation** - perfect for automated deployment pipelines
+
+**UPGRADE BENEFITS:**
+- 🚀 **Eliminates build failures** from certificate trust issues
+- 🛡️ **Works across all certificate types** - Development, Distribution, Enterprise
+- ⚡ **Faster deployments** - no more manual certificate troubleshooting
+- 🤝 **Team collaboration** - consistent behavior across all developer machines
+
+**How to Upgrade:**
+```bash
+brew upgrade apple-deploy
+```
+
+> **💡 Technical Details:** The fix uses `security set-key-partition-list` to grant certificate trust permissions automatically during keychain setup. See [Technical Implementation Notes](#️-v2123-technical-implementation-notes) for implementation details.
+
+---
+
 ## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.3!
 
 ### Step 1: Install (30 seconds)
@@ -59,11 +86,11 @@
 brew tap snooky23/tools
 brew install apple-deploy
 
-# 🔥 IMPORTANT: If upgrading from v2.12.1 or earlier, use:
-# brew uninstall apple-deploy && brew install apple-deploy
+# To upgrade to latest version with certificate trust fix:
+brew upgrade apple-deploy
 ```
 
-> **⚠️ Upgrading from v2.12.1 or earlier?** You MUST uninstall and reinstall to get the critical working directory fix!
+> **🛡️ NEW in v2.12.3:** Universal certificate trust fix resolves CI/CD signing errors! See [What's New](#️-whats-new-in-v2123) for details.
 
 ### Step 2: Get Apple Credentials (2 minutes)
 1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
