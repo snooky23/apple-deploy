@@ -55,8 +55,8 @@ class ValidateDeploymentEnvironment
       # Create validation environment entity
       validation_environment = create_validation_environment(request)
       
-      # Execute validation based on mode
-      validation_result = execute_validation_mode(validation_environment, request)
+      # Execute validation based on mode and scope
+      validation_result = execute_validation_with_scope(validation_environment, request)
       
       # Enhance result with integration data
       enhanced_result = enhance_validation_result(validation_result, request, validation_environment)
@@ -140,19 +140,25 @@ class ValidateDeploymentEnvironment
   end
 
   ##
-  # Execute validation based on specified mode
+  # Execute validation with scope and mode support
   #
   # @param environment [ValidationEnvironment] Validation environment
   # @param request [ValidateDeploymentEnvironmentRequest] Original request
-  # @return [ValidationResult] Mode-specific validation result
-  def execute_validation_mode(environment, request)
-    case request.mode.downcase
-    when 'quick'
-      environment.validate_quick
-    when 'comprehensive'
-      environment.validate_comprehensive
-    else # full
-      environment.validate_full
+  # @return [ValidationResult] Scoped validation result
+  def execute_validation_with_scope(environment, request)
+    # If scope is specified and not "all", use scope-based validation
+    if request.scope && request.scope != 'all'
+      environment.validate_with_scope(request.scope)
+    else
+      # Use traditional mode-based validation for scope="all"
+      case request.mode.downcase
+      when 'quick'
+        environment.validate_quick
+      when 'comprehensive'
+        environment.validate_comprehensive
+      else # full
+        environment.validate_full
+      end
     end
   end
 
@@ -223,7 +229,7 @@ class ValidateDeploymentEnvironment
           type: 'privacy_integration',
           priority: 'high',
           action: 'Run standalone privacy validation',
-          command: "apple-deploy validate_privacy scheme=\"#{request.scheme}\"",
+          command: "apple-deploy validate scope=\"privacy\" scheme=\"#{request.scheme}\"",
           description: 'Get detailed privacy validation with fix instructions'
         }
       end
@@ -363,7 +369,7 @@ class ValidateDeploymentEnvironment
     when :authentication
       'apple-deploy help # Check API credentials setup'
     when :privacy
-      'apple-deploy validate_privacy # Get detailed privacy guidance'
+      'apple-deploy validate scope=\"privacy\" # Get detailed privacy guidance'
     when :certificates
       'apple-deploy setup_certificates # Setup signing certificates'
     when :project
@@ -402,7 +408,7 @@ end
 #
 class ValidateDeploymentEnvironmentRequest
   attr_reader :app_identifier, :team_id, :scheme, :project_directory, 
-              :apple_info_dir, :mode, :strict_mode, :domains
+              :apple_info_dir, :mode, :strict_mode, :scope, :domains
 
   ##
   # Initialize validation request
@@ -414,10 +420,11 @@ class ValidateDeploymentEnvironmentRequest
   # @param apple_info_dir [String] Path to apple_info directory
   # @param mode [String] Validation mode (quick, full, comprehensive)
   # @param strict_mode [Boolean] Whether to treat warnings as errors
-  # @param domains [Array<String>] Specific domains to validate (optional)
+  # @param scope [String] Validation scope (all, privacy, environment, etc.)
+  # @param domains [Array<String>] Specific domains to validate (deprecated, use scope)
   def initialize(app_identifier: nil, team_id: nil, scheme: nil, 
                  project_directory: nil, apple_info_dir: nil, 
-                 mode: 'full', strict_mode: false, domains: [])
+                 mode: 'full', strict_mode: false, scope: 'all', domains: [])
     @app_identifier = app_identifier
     @team_id = team_id
     @scheme = scheme
@@ -425,6 +432,7 @@ class ValidateDeploymentEnvironmentRequest
     @apple_info_dir = apple_info_dir
     @mode = mode
     @strict_mode = strict_mode
+    @scope = scope
     @domains = domains || []
   end
 end

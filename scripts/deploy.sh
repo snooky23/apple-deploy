@@ -251,7 +251,7 @@ EOF
             log_info "   1. Open your Info.plist file in Xcode"
             log_info "   2. Add missing privacy usage description keys"
             log_info "   3. Provide clear, user-friendly explanations"
-            log_info "   4. Run 'apple-deploy validate_privacy' to verify fixes"
+            log_info "   4. Run 'apple-deploy validate scope=\"privacy\"' to verify fixes"
             log_info ""
             log_info "📖 Privacy Guide: https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/requesting_access_to_protected_resources"
             
@@ -1106,6 +1106,7 @@ validate_deployment_environment_unified() {
     [ -n "$APPLE_INFO_BASE_DIR" ] && validation_request+='"apple_info_dir": "'$APPLE_INFO_BASE_DIR'",'
     validation_request+='"mode": "'$VALIDATION_MODE'",'
     validation_request+='"strict_mode": '$VALIDATION_STRICT','
+    validation_request+='"scope": "'$VALIDATION_SCOPE'",'
     validation_request+='"project_directory": "."'
     validation_request+="}"
     
@@ -1136,7 +1137,8 @@ begin
     project_directory: request_params[:project_directory] || '.',
     apple_info_dir: request_params[:apple_info_dir],
     mode: request_params[:mode] || 'full',
-    strict_mode: request_params[:strict_mode] || false
+    strict_mode: request_params[:strict_mode] || false,
+    scope: request_params[:scope] || 'all'
   )
   
   # Execute validation use case
@@ -1412,7 +1414,7 @@ if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  smart_marketing_version_increment - Intelligent version increment with App Store sync"
     echo "  check_testflight_status_standalone - Check latest TestFlight build status with enhanced details"
     echo "  validate              - Run comprehensive pre-deployment validation (environment, network, API, privacy, certificates)"
-    echo "  validate_privacy      - Validate privacy usage descriptions (prevent ITMS-90683 errors)"
+    echo "  validate scope=privacy - Validate privacy usage descriptions (prevent ITMS-90683 errors)"
     echo "  verify_build          - Standalone build verification (IPA integrity, structure, signing)"
     echo "  status                - Show certificate and profile status"
     echo "  cleanup               - Clean certificates and profiles"
@@ -1503,7 +1505,7 @@ if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  ../scripts/deploy.sh validate mode=\"quick\"                          # Quick validation (environment + network)"
     echo "  ../scripts/deploy.sh validate mode=\"comprehensive\" team_id=\"YOUR_TEAM_ID\" scheme=\"MyApp\"  # Deep validation"
     echo "  ../scripts/deploy.sh validate strict=\"true\" app_identifier=\"com.your.app\"  # Strict mode (warnings as errors)"
-    echo "  ../scripts/deploy.sh validate_privacy scheme=\"MyApp\"                # Privacy validation only"
+    echo "  ../scripts/deploy.sh validate scope=\"privacy\" scheme=\"MyApp\"      # Privacy validation only"
     echo "  ../scripts/deploy.sh verify_build scheme=\"MyApp\"                    # Build verification only"
     echo ""
     echo "Note: Parameters override config.env values, which override script defaults."
@@ -1524,6 +1526,7 @@ if [ "$LANE" = "validate" ]; then
     VALIDATION_MODE="full"  # Default mode
     VALIDATION_STRICT="false"
     VALIDATION_QUICK="false"
+    VALIDATION_SCOPE="all"  # Default scope
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -1562,6 +1565,10 @@ if [ "$LANE" = "validate" ]; then
                 if [ "${1#*=}" = "true" ]; then
                     VALIDATION_MODE="comprehensive"
                 fi
+                shift
+                ;;
+            scope=*)
+                VALIDATION_SCOPE="${1#*=}"
                 shift
                 ;;
             api_key_path=* | api_key_id=* | api_issuer_id=*)
@@ -1603,7 +1610,7 @@ if [ "$LANE" = "validate" ]; then
    1. ✅ Environment validated! Ready for deployment
    2. Run: apple-deploy deploy [your parameters]
    3. Or check specific areas:
-      • Privacy: apple-deploy validate_privacy scheme=\"$SCHEME\"
+      • Privacy: apple-deploy validate scope=\"privacy\" scheme=\"$SCHEME\"
       • Certificates: apple-deploy setup_certificates team_id=\"$TEAM_ID\"
       • Build: apple-deploy verify_build scheme=\"$SCHEME\""
         show_result_summary "true" "🎉 VALIDATION SUCCESSFUL - Environment ready for deployment!" "$next_steps"
@@ -1666,103 +1673,6 @@ if [ "$LANE" = "verify_build" ]; then
 fi
 
 # Handle standalone privacy validation command
-if [ "$LANE" = "validate_privacy" ]; then
-    show_header "STANDALONE PRIVACY VALIDATION" "🔒"
-    show_status "info" "This will validate privacy usage descriptions in your Info.plist file"
-    show_status "info" "Prevents TestFlight upload failures due to missing purpose strings (ITMS-90683)"
-    
-    # Parse parameters for privacy validation
-    shift # Remove the lane parameter
-    info_plist_path=""
-    strict_mode="false"
-    scheme=""
-    
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            info_plist_path=*)
-                info_plist_path="${1#*=}"
-                shift
-                ;;
-            strict_mode=*)
-                strict_mode="${1#*=}"
-                shift
-                ;;
-            scheme=*)
-                scheme="${1#*=}"
-                SCHEME="$scheme"
-                shift
-                ;;
-            app_identifier=*)
-                APP_IDENTIFIER="${1#*=}"
-                shift
-                ;;
-            privacy_validation=*)
-                PRIVACY_VALIDATION="${1#*=}"
-                shift
-                ;;
-            *)
-                log_warning "Unknown parameter: $1"
-                shift
-                ;;
-        esac
-    done
-    
-    # Set default privacy validation mode
-    if [ -z "$PRIVACY_VALIDATION" ]; then
-        PRIVACY_VALIDATION="strict"
-    fi
-    
-    # Auto-detect Info.plist if not provided
-    if [ -z "$info_plist_path" ] && [ -n "$scheme" ]; then
-        possible_paths=(
-            "./$scheme/Info.plist"
-            "./$scheme/$scheme-Info.plist"
-            "./Sources/$scheme/Info.plist"
-            "./Info.plist"
-        )
-        
-        for path in "${possible_paths[@]}"; do
-            if [ -f "$path" ]; then
-                info_plist_path="$path"
-                log_info "📱 Auto-detected Info.plist: $info_plist_path"
-                break
-            fi
-        done
-    fi
-    
-    if [ -z "$info_plist_path" ]; then
-        # Try common fallback locations
-        for path in "./Info.plist" "./*/Info.plist"; do
-            if [ -f "$path" ]; then
-                info_plist_path="$path"
-                log_info "📱 Found Info.plist: $info_plist_path"
-                break
-            fi
-        done
-    fi
-    
-    if [ -z "$info_plist_path" ] || [ ! -f "$info_plist_path" ]; then
-        log_error "❌ Info.plist file not found"
-        log_info "💡 Specify path: validate_privacy info_plist_path=\"./MyApp/Info.plist\""
-        log_info "💡 Or run from your iOS project directory"
-        exit 1
-    fi
-    
-    # Execute privacy validation
-    log_info "🔒 Validating privacy usage descriptions..."
-    if validate_privacy_usage_descriptions "$info_plist_path" "$strict_mode"; then
-        next_steps="📋 NEXT STEPS:
-   1. Your app is ready for TestFlight upload
-   2. Deploy: apple-deploy deploy ...
-   3. Or continue with normal development workflow"
-        show_result_summary "true" "PRIVACY VALIDATION SUCCESSFUL - No TestFlight upload issues detected!" "$next_steps"
-        exit 0
-    else
-        log_error "💡 TIP: Fix the privacy issues above to prevent TestFlight upload failures"
-        log_info "📖 Privacy Guide: https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/requesting_access_to_protected_resources"
-        exit 1
-    fi
-fi
 
 # Parse named parameters (e.g., app_identifier="com.example.app")
 shift # Remove the lane parameter

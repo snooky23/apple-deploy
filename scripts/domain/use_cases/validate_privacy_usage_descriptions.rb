@@ -219,7 +219,7 @@ class ValidatePrivacyUsageDescriptions
       instructions << {
         step: 3,
         action: 'Test your changes',
-        details: 'Run apple-deploy validate_privacy to verify all issues are resolved'
+        details: 'Run apple-deploy validate scope=\"privacy\" to verify all issues are resolved'
       }
       
       instructions << {

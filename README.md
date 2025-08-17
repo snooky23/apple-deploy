@@ -62,7 +62,7 @@
 - ✅ **Clean Architecture Implementation** - Domain-driven design with 95%+ test coverage
 - ✅ **Smart Info.plist Detection** - Automatic project file discovery and validation
 - ✅ **Three Validation Modes** - strict (fail), warn (continue), skip (bypass)
-- ✅ **Standalone Privacy Command** - `apple-deploy validate_privacy` for targeted checking
+- ✅ **Unified Validation System** - `apple-deploy validate` with scope support for targeted checking
 - ✅ **Educational Error Messages** - Step-by-step fix instructions with Apple documentation links
 - ✅ **Quality Analysis** - Detects placeholder text and insufficient purpose string descriptions
 
@@ -80,7 +80,7 @@
 apple-deploy deploy privacy_validation="strict" [...]
 
 # 2. Standalone validation
-apple-deploy validate_privacy scheme="MyApp"
+apple-deploy validate scope="privacy" scheme="MyApp"
 
 # 3. Custom modes
 apple-deploy deploy privacy_validation="warn" [...]   # Continue with warnings
@@ -299,8 +299,7 @@ bundle install
 | Command | Purpose |
 |---------|---------|
 | `apple-deploy deploy` | Complete TestFlight deployment with privacy validation |
-| `apple-deploy validate_privacy` | Validate privacy usage descriptions |
-| `apple-deploy validate` | Comprehensive pre-deployment validation |
+| `apple-deploy validate` | Unified validation system with flexible scope targeting |
 | `apple-deploy status` | Check TestFlight build status and environment health |
 | `apple-deploy verify_build` | Standalone IPA verification and integrity checks |
 | `apple-deploy init` | Initialize project structure |
@@ -337,7 +336,7 @@ apple-deploy deploy \
 🎉 Successfully deployed v1.2.3 build 45 to TestFlight!
 ```
 
-### 🔒 `apple-deploy validate_privacy` - Privacy Validation
+### 🔒 `apple-deploy validate scope="privacy"` - Privacy Validation
 **What it does:** Validates privacy usage descriptions to prevent TestFlight upload failures
 - ✅ **Prevents ITMS-90683 errors** before TestFlight upload
 - ✅ **15+ privacy keys validated** (Camera, Location, Contacts, Speech Recognition, etc.)
@@ -347,13 +346,13 @@ apple-deploy deploy \
 
 ```bash
 # Basic validation (auto-detects Info.plist)
-apple-deploy validate_privacy scheme="MyApp"
+apple-deploy validate scope="privacy" scheme="MyApp"
 
 # Custom Info.plist path
-apple-deploy validate_privacy info_plist_path="./MyApp/Info.plist"
+apple-deploy validate scope="privacy" info_plist_path="./MyApp/Info.plist"
 
 # Strict mode (warnings become errors)
-apple-deploy validate_privacy scheme="MyApp" strict_mode="true"
+apple-deploy validate scope="privacy" scheme="MyApp" strict_mode="true"
 ```
 
 **Output example:**
@@ -379,8 +378,8 @@ apple-deploy validate_privacy scheme="MyApp" strict_mode="true"
 - Health & Fitness data, Bluetooth, Local Network
 - User Tracking Transparency (iOS 14.5+)
 
-### 🛡️ `apple-deploy validate` - Comprehensive Pre-Deployment Validation
-**What it does:** Runs comprehensive validation checks before deployment
+### 🛡️ `apple-deploy validate` - Unified Validation System
+**What it does:** Comprehensive validation system with flexible scope targeting
 - ✅ **Environment validation** - Xcode, tools, and system requirements
 - ✅ **Network connectivity** - Internet connection and Apple services
 - ✅ **API credentials** - App Store Connect authentication
@@ -396,13 +395,21 @@ apple-deploy validate \
     app_identifier="com.mycompany.myapp" \
     scheme="MyApp"
 
-# Quick validation (checks only environment and network)
-apple-deploy validate quick="true"
+# Quick validation (environment and network only)
+apple-deploy validate mode="quick"
+
+# Scope-based validation (specific domains)
+apple-deploy validate scope="privacy" scheme="MyApp"
+apple-deploy validate scope="environment,network"
+apple-deploy validate scope="privacy,certs" team_id="ABC1234567"
+
+# Predefined scope combinations
+apple-deploy validate scope="essential"  # environment + network + auth
 ```
 
 **Output example:**
 ```
-🛡️ Comprehensive Pre-Deployment Validation
+🛡️ Unified Validation System
 ✅ Environment: Xcode 15.2, Command Line Tools installed
 ✅ Network: Connected to Apple Developer services  
 ✅ API Credentials: Valid App Store Connect authentication
@@ -412,6 +419,19 @@ apple-deploy validate quick="true"
 
 🎉 All validation checks passed! Ready for deployment.
 ```
+
+**Validation Scopes:**
+- `environment` - Xcode, Command Line Tools, system requirements
+- `network` - Internet connectivity, Apple Developer services  
+- `auth` / `authentication` - App Store Connect API credentials
+- `privacy` - Info.plist privacy usage descriptions
+- `certs` / `certificates` - Code signing certificates and profiles
+- `project` - Xcode project configuration and build settings
+
+**Predefined Combinations:**
+- `all` - Complete validation suite (default)
+- `quick` - Environment and network only (fastest)
+- `essential` - Environment, network, and authentication
 
 ### 📊 `apple-deploy status` - Build Status & Environment Health
 **What it does:** Checks TestFlight build status and environment health
@@ -826,7 +846,7 @@ apple-deploy status \
     app_identifier="com.yourapp"
 
 # Test privacy validation specifically
-apple-deploy validate_privacy scheme="YourScheme"
+apple-deploy validate scope="privacy" scheme="YourScheme"
 ```
 
 ### Common Issues
@@ -847,7 +867,7 @@ app needs the data.
 **✅ IMMEDIATE FIX:**
 ```bash
 # 1. Run privacy validation to see exactly what's missing
-apple-deploy validate_privacy scheme="YourApp"
+apple-deploy validate scope="privacy" scheme="YourApp"
 
 # 2. Add missing keys to your Info.plist in Xcode:
 #    - Right-click Info.plist → Open As → Property List
@@ -893,7 +913,7 @@ apple-deploy deploy privacy_validation="skip" [...]
 - Avoid generic phrases like "This app uses your camera"
 - Explain the user benefit clearly
 - Use friendly, non-technical language
-- Test with `apple-deploy validate_privacy` before deployment
+- Test with `apple-deploy validate scope="privacy"` before deployment
 
 </details>
 

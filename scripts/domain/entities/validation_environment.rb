@@ -44,6 +44,27 @@ class ValidationEnvironment
   VALIDATION_MODES = %w[quick full comprehensive].freeze
 
   ##
+  # Scope aliases for user-friendly domain targeting
+  SCOPE_ALIASES = {
+    'environment' => :environment,
+    'network' => :network,
+    'auth' => :authentication,
+    'authentication' => :authentication,
+    'privacy' => :privacy,
+    'certs' => :certificates,
+    'certificates' => :certificates,
+    'project' => :project
+  }.freeze
+
+  ##
+  # Predefined scope combinations
+  PREDEFINED_SCOPES = {
+    'all' => :all_domains,
+    'quick' => [:environment, :network],
+    'essential' => [:environment, :network, :authentication]
+  }.freeze
+
+  ##
   # Validation domain definitions with priority and dependencies
   VALIDATION_DOMAINS = {
     environment: {
@@ -182,6 +203,100 @@ class ValidationEnvironment
     when :project
       validate_project_domain
     end
+  end
+
+  ##
+  # Parse scope string into domain list
+  #
+  # @param scope_string [String] Scope parameter (e.g., "privacy,certs" or "all")
+  # @return [Array<Symbol>] List of domains to validate
+  def parse_scope_to_domains(scope_string)
+    return [] if scope_string.nil? || scope_string.strip.empty?
+    
+    scope_string = scope_string.strip.downcase
+    
+    # Handle predefined scopes
+    if PREDEFINED_SCOPES.key?(scope_string)
+      predefined = PREDEFINED_SCOPES[scope_string]
+      return predefined == :all_domains ? VALIDATION_DOMAINS.keys : predefined
+    end
+    
+    # Parse comma-separated domains
+    domains = []
+    scope_parts = scope_string.split(',').map(&:strip)
+    
+    scope_parts.each do |part|
+      if SCOPE_ALIASES.key?(part)
+        domain = SCOPE_ALIASES[part]
+        domains << domain unless domains.include?(domain)
+      else
+        # Return error for unknown domain
+        raise ArgumentError, "Unknown validation domain: '#{part}'. Available: #{SCOPE_ALIASES.keys.join(', ')}"
+      end
+    end
+    
+    domains
+  end
+
+  ##
+  # Validate with specific scope
+  #
+  # @param scope_string [String] Scope parameter
+  # @return [ValidationResult] Scoped validation result
+  def validate_with_scope(scope_string)
+    domains_to_validate = parse_scope_to_domains(scope_string)
+    
+    if domains_to_validate.empty?
+      return ValidationResult.new(
+        success: false,
+        errors: [{ 
+          type: 'invalid_scope',
+          message: "No valid domains found in scope: '#{scope_string}'"
+        }]
+      )
+    end
+    
+    validate_specific_domains(domains_to_validate)
+  end
+
+  ##
+  # Validate specific list of domains
+  #
+  # @param domains [Array<Symbol>] Domains to validate
+  # @return [ValidationResult] Domain-specific validation result
+  def validate_specific_domains(domains)
+    reset_validation_state
+    
+    # Auto-include dependencies for scoped validation
+    expanded_domains = expand_domains_with_dependencies(domains)
+    
+    # Sort domains by priority and validate
+    ordered_domains = sort_domains_by_priority(expanded_domains)
+    
+    ordered_domains.each do |domain|
+      domain_result = validate_domain(domain)
+      record_domain_result(domain, domain_result)
+    end
+    
+    generate_final_result
+  end
+
+  ##
+  # Expand domain list to include dependencies
+  #
+  # @param domains [Array<Symbol>] Requested domains
+  # @return [Array<Symbol>] Domains with dependencies included
+  def expand_domains_with_dependencies(domains)
+    expanded = domains.dup
+    
+    domains.each do |domain|
+      dependencies = VALIDATION_DOMAINS[domain][:dependencies]
+      dependencies.each do |dep|
+        expanded << dep unless expanded.include?(dep)
+      end
+    end
+    
+    expanded.uniq
   end
 
   ##
