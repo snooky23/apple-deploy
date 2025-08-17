@@ -223,7 +223,7 @@ brew upgrade apple-deploy
 
 ---
 
-## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.13.0!
+## 🚀 Quick Start (Under 3 Minutes)
 
 ### Step 1: Install (30 seconds)
 ```bash
@@ -296,17 +296,17 @@ bundle install
 
 ## 🎯 Commands Reference
 
-| Command | Purpose | Status |
-|---------|---------|---------|
-| `apple-deploy deploy` | Complete TestFlight deployment with privacy validation | ✅ Production Ready |
-| `apple-deploy validate_privacy` | Validate privacy usage descriptions | ✅ Production Ready |
-| `apple-deploy validate` | Comprehensive pre-deployment validation | ✅ Production Ready |
-| `apple-deploy status` | Check TestFlight build status and environment health | ✅ Production Ready |
-| `apple-deploy verify_build` | Standalone IPA verification and integrity checks | ✅ Production Ready |
-| `apple-deploy init` | Initialize project structure | ✅ Production Ready |
-| `apple-deploy setup_certificates` | Setup certificates & profiles | ✅ Production Ready |
-| `apple-deploy help` | Show usage information | ✅ Available |
-| `apple-deploy version` | Show version information | ✅ Available |
+| Command | Purpose |
+|---------|---------|
+| `apple-deploy deploy` | Complete TestFlight deployment with privacy validation |
+| `apple-deploy validate_privacy` | Validate privacy usage descriptions |
+| `apple-deploy validate` | Comprehensive pre-deployment validation |
+| `apple-deploy status` | Check TestFlight build status and environment health |
+| `apple-deploy verify_build` | Standalone IPA verification and integrity checks |
+| `apple-deploy init` | Initialize project structure |
+| `apple-deploy setup_certificates` | Setup certificates & profiles |
+| `apple-deploy help` | Show usage information |
+| `apple-deploy version` | Show version information |
 
 ### 🚀 `apple-deploy deploy` - Complete TestFlight Deployment
 **What it does:** Full end-to-end deployment from code to TestFlight
