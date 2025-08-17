@@ -97,7 +97,52 @@ platform :ios do
     end
     
     if info_plist_path.nil?
-      UI.user_error!("❌ Info.plist file not found. Checked paths: #{possible_paths.join(', ')}")
+      UI.message("🔍 Info.plist not found - checking for embedded Info.plist in build settings")
+      
+      # Check for embedded Info.plist via build settings
+      build_settings_output = `xcodebuild -target #{scheme} -showBuildSettings 2>/dev/null`
+      
+      if build_settings_output.include?("GENERATE_INFOPLIST_FILE = YES")
+        UI.message("✓ Project uses embedded Info.plist (GENERATE_INFOPLIST_FILE = YES)")
+        
+        # Extract privacy keys from build settings
+        privacy_keys_found = 0
+        
+        privacy_keys = [
+          "INFOPLIST_KEY_NSCameraUsageDescription",
+          "INFOPLIST_KEY_NSMicrophoneUsageDescription", 
+          "INFOPLIST_KEY_NSPhotoLibraryUsageDescription",
+          "INFOPLIST_KEY_NSContactsUsageDescription",
+          "INFOPLIST_KEY_NSLocationWhenInUseUsageDescription",
+          "INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription",
+          "INFOPLIST_KEY_NSSpeechRecognitionUsageDescription",
+          "INFOPLIST_KEY_NSFaceIDUsageDescription",
+          "INFOPLIST_KEY_NSUserTrackingUsageDescription"
+        ]
+        
+        privacy_keys.each do |key|
+          if build_settings_output.include?(key)
+            value = build_settings_output.match(/#{key} = (.+)$/)&.captures&.first
+            UI.message("✓ #{key}: #{value}")
+            privacy_keys_found += 1
+          end
+        end
+        
+        if privacy_keys_found > 0
+          UI.success("✅ Found #{privacy_keys_found} privacy usage descriptions in build settings")
+          UI.message("✅ Embedded Info.plist privacy validation passed")
+          next
+        else
+          if strict_mode
+            UI.user_error!("❌ No privacy usage descriptions found in build settings")
+          else
+            UI.important("⚠️ No privacy usage descriptions found - continuing with warning")
+            next
+          end
+        end
+      else
+        UI.user_error!("❌ Info.plist file not found and project doesn't use embedded Info.plist. Checked paths: #{possible_paths.join(', ')}")
+      end
     end
     
     begin

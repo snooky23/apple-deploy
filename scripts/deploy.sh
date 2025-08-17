@@ -120,6 +120,62 @@ show_result_summary() {
     show_separator
 }
 
+# Validate embedded Info.plist privacy settings from Xcode build settings
+validate_embedded_privacy_settings() {
+    log_info "🔍 Checking embedded privacy settings in Xcode build settings..."
+    
+    # Get build settings for the scheme/target
+    local build_settings
+    if ! build_settings=$(xcodebuild -target "$SCHEME" -showBuildSettings 2>/dev/null); then
+        log_warning "⚠️ Could not read build settings for target: $SCHEME"
+        return 1
+    fi
+    
+    # Check for GENERATE_INFOPLIST_FILE = YES (indicates embedded Info.plist)
+    if echo "$build_settings" | grep -q "GENERATE_INFOPLIST_FILE = YES"; then
+        log_info "✓ Project uses embedded Info.plist (GENERATE_INFOPLIST_FILE = YES)"
+        
+        # Extract privacy usage descriptions from build settings
+        local privacy_keys_found=0
+        local privacy_keys_missing=()
+        
+        # Common privacy keys to check
+        local privacy_checks=(
+            "INFOPLIST_KEY_NSCameraUsageDescription:Camera"
+            "INFOPLIST_KEY_NSMicrophoneUsageDescription:Microphone"
+            "INFOPLIST_KEY_NSPhotoLibraryUsageDescription:Photo Library"
+            "INFOPLIST_KEY_NSContactsUsageDescription:Contacts"
+            "INFOPLIST_KEY_NSLocationWhenInUseUsageDescription:Location (When In Use)"
+            "INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription:Location (Always)"
+            "INFOPLIST_KEY_NSSpeechRecognitionUsageDescription:Speech Recognition"
+            "INFOPLIST_KEY_NSFaceIDUsageDescription:Face ID"
+            "INFOPLIST_KEY_NSUserTrackingUsageDescription:User Tracking"
+        )
+        
+        for check in "${privacy_checks[@]}"; do
+            local key="${check%%:*}"
+            local description="${check##*:}"
+            
+            if echo "$build_settings" | grep -q "$key"; then
+                local value=$(echo "$build_settings" | grep "$key" | head -1 | sed 's/.*= //')
+                log_success "✓ $description: $value"
+                ((privacy_keys_found++))
+            fi
+        done
+        
+        if [ $privacy_keys_found -gt 0 ]; then
+            log_success "✅ Found $privacy_keys_found privacy usage descriptions in build settings"
+            return 0
+        else
+            log_warning "⚠️ No privacy usage descriptions found in build settings"
+            return 1
+        fi
+    else
+        log_info "ℹ️ Project does not use embedded Info.plist"
+        return 1
+    fi
+}
+
 # Privacy validation system for Info.plist compliance using Clean Architecture
 validate_privacy_usage_descriptions() {
     local info_plist_path="$1"
@@ -164,11 +220,23 @@ validate_privacy_usage_descriptions() {
         done
         
         if [ ! -f "$info_plist_path" ]; then
-            log_warning "⚠️ Info.plist not found - skipping privacy validation"
-            log_info "💡 Modern iOS projects may embed Info.plist properties in build settings"
-            log_info "💡 If your project uses embedded Info.plist, privacy validation will be skipped"
-            log_info "💡 To enable validation, extract Info.plist to a separate file"
-            return 0
+            log_info "🔍 Info.plist not found - checking for embedded Info.plist in build settings"
+            
+            # Check if project uses embedded Info.plist (GENERATE_INFOPLIST_FILE = YES)
+            if validate_embedded_privacy_settings; then
+                log_success "✅ Embedded privacy validation passed"
+                return 0
+            else
+                if [ "$validation_mode" = "strict" ]; then
+                    log_error "❌ No privacy usage descriptions found in build settings"
+                    log_info "💡 Add privacy descriptions to your target's build settings in Xcode"
+                    log_info "💡 Search for 'Privacy' in build settings and add required usage descriptions"
+                    return 1
+                else
+                    log_warning "⚠️ No privacy usage descriptions found - continuing with warning"
+                    return 0
+                fi
+            fi
         fi
     fi
     
