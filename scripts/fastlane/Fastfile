@@ -100,7 +100,9 @@ platform :ios do
       UI.message("🔍 Info.plist not found - checking for embedded Info.plist in build settings")
       
       # Check for embedded Info.plist via build settings
-      build_settings_output = `xcodebuild -target #{scheme} -showBuildSettings 2>/dev/null`
+      # Change to parent directory to run xcodebuild since Fastlane runs from /fastlane subdirectory
+      project_dir = File.expand_path("..")
+      build_settings_output = `cd #{project_dir} && xcodebuild -target #{scheme} -showBuildSettings 2>/dev/null`
       
       if build_settings_output.include?("GENERATE_INFOPLIST_FILE = YES")
         UI.message("✓ Project uses embedded Info.plist (GENERATE_INFOPLIST_FILE = YES)")
