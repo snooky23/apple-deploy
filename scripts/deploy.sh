@@ -18,7 +18,7 @@ mkdir -p "$BUILD_LOGS_DIR" 2>/dev/null || BUILD_LOGS_DIR="${PWD}"
 LOG_FILE="${BUILD_LOGS_DIR}/deployment_$(date +%Y%m%d_%H%M%S).log"
 
 # Progress tracking variables
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 CURRENT_STEP=0
 DEPLOYMENT_START_TIME=$(date +%s)
 
@@ -142,10 +142,18 @@ validate_privacy_usage_descriptions() {
         # Try common Info.plist locations
         local possible_paths=(
             "./$SCHEME/Info.plist"
-            "./$APP_IDENTIFIER/Info.plist"
             "./Info.plist"
-            "./$SCHEME.xcodeproj/project.pbxproj"
+            "./$SCHEME/Supporting Files/Info.plist"
+            "./Supporting Files/Info.plist"
         )
+        
+        # Also try to find any Info.plist files in the project
+        local found_plists=$(find . -name "Info.plist" -not -path "*/build/*" -not -path "*/DerivedData/*" 2>/dev/null | head -5)
+        if [ -n "$found_plists" ]; then
+            while IFS= read -r plist_file; do
+                possible_paths+=("$plist_file")
+            done <<< "$found_plists"
+        fi
         
         for path in "${possible_paths[@]}"; do
             if [ -f "$path" ]; then
@@ -157,7 +165,9 @@ validate_privacy_usage_descriptions() {
         
         if [ ! -f "$info_plist_path" ]; then
             log_warning "⚠️ Info.plist not found - skipping privacy validation"
-            log_info "💡 Ensure Info.plist exists in your project for privacy validation"
+            log_info "💡 Modern iOS projects may embed Info.plist properties in build settings"
+            log_info "💡 If your project uses embedded Info.plist, privacy validation will be skipped"
+            log_info "💡 To enable validation, extract Info.plist to a separate file"
             return 0
         fi
     fi
@@ -2199,7 +2209,7 @@ show_step_completion 2 "Setup FastLane Scripts" "true" "$STEP2_DURATION"
 
 # Step 2b: Privacy Validation
 STEP25_START_TIME=$(date +%s)
-show_progress_header "2b" "Privacy Validation" "10-20s"
+show_progress_header "3" "Privacy Validation" "10-20s"
 
 # Set default privacy validation mode if not specified
 if [ -z "$PRIVACY_VALIDATION" ]; then
@@ -2247,7 +2257,7 @@ else
     if [ "$PRIVACY_VALIDATION" = "strict" ]; then
         STEP25_END_TIME=$(date +%s)
         STEP25_DURATION=$((STEP25_END_TIME - STEP25_START_TIME))
-        show_step_completion "2b" "Privacy Validation" "false" "$STEP25_DURATION"
+        show_step_completion "3" "Privacy Validation" "false" "$STEP25_DURATION"
         log_error "🛑 Deployment stopped due to privacy validation failure"
         log_info "💡 Fix privacy issues and retry, or use privacy_validation=\"warn\" to continue"
         exit 1
@@ -2256,11 +2266,11 @@ fi
 
 STEP25_END_TIME=$(date +%s)
 STEP25_DURATION=$((STEP25_END_TIME - STEP25_START_TIME))
-show_step_completion "2b" "Privacy Validation" "true" "$STEP25_DURATION"
+show_step_completion "3" "Privacy Validation" "true" "$STEP25_DURATION"
 
-# Step 3: Verify Xcode project exists
+# Step 4: Verify Xcode project exists
 STEP3_START_TIME=$(date +%s)
-show_progress_header 3 "Xcode Project Verification" "5s"
+show_progress_header 4 "Xcode Project Verification" "5s"
 
 log_info "📱 Verifying Xcode project..."
 cd "$APP_DIR"
@@ -2281,7 +2291,7 @@ show_step_completion 3 "Xcode Project Verification" "true" "$STEP3_DURATION"
 
 # Step 4: Smart Version Management
 STEP4_START_TIME=$(date +%s)
-show_progress_header 4 "Smart Version Management" "15-30s"
+show_progress_header 5 "Smart Version Management" "15-30s"
 
 log_info "📈 Processing version management..."
 if [ "$LANE" = "build_and_upload" ]; then
@@ -2553,13 +2563,13 @@ STEP5_START_TIME=$(date +%s)
 # Determine estimated time based on lane
 case "$LANE" in
     "build_and_upload")
-        show_progress_header 5 "Build and Upload to TestFlight" "3-8 minutes"
+        show_progress_header 6 "Build and Upload to TestFlight" "3-8 minutes"
         ;;
     "setup_certificates"|"setup_team_certificates")
-        show_progress_header 5 "Certificate Setup" "30-60s"
+        show_progress_header 6 "Certificate Setup" "30-60s"
         ;;
     *)
-        show_progress_header 5 "FastLane Execution" "30s-5m"
+        show_progress_header 6 "FastLane Execution" "30s-5m"
         ;;
 esac
 
@@ -2850,7 +2860,7 @@ echo "📁 Restored working directory to: $ORIGINAL_PWD"
 
 # Step 6: Check results and summary
 STEP6_START_TIME=$(date +%s)
-show_progress_header 6 "Deployment Summary & Cleanup" "10-15s"
+show_progress_header 7 "Deployment Summary & Cleanup" "10-15s"
 
 log_info "📊 Analyzing deployment results..."
 
