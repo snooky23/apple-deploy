@@ -220,9 +220,35 @@ platform :ios do
         raise "Provisioning profiles creation failed: #{profiles_result.error}"
       end
       
-      # Get version info from environment  
-      version = ENV['FL_VERSION'] || '1.0.0'
-      build_number = ENV['FL_BUILD_NUMBER'] || '1'
+      # Get version info from Xcode project (updated by deploy.sh)
+      project_file = "./#{scheme}.xcodeproj/project.pbxproj"
+      
+      if File.exist?(project_file)
+        # Read marketing version from project
+        version_line = File.readlines(project_file).find { |line| line.include?('MARKETING_VERSION') }
+        if version_line
+          version = version_line.match(/MARKETING_VERSION = ([^;]*);/)[1].strip
+        else
+          version = ENV['FL_VERSION'] || '1.0.0'
+        end
+        
+        # Read build number from project
+        build_line = File.readlines(project_file).find { |line| line.include?('CURRENT_PROJECT_VERSION') }
+        if build_line
+          build_number = build_line.match(/CURRENT_PROJECT_VERSION = ([^;]*);/)[1].strip
+        else
+          build_number = ENV['FL_BUILD_NUMBER'] || '1'
+        end
+        
+        UI.message("📱 Read from project file:")
+        UI.message("   - Marketing Version: #{version}")
+        UI.message("   - Build Number: #{build_number}")
+      else
+        # Fallback to environment variables
+        version = ENV['FL_VERSION'] || '1.0.0'
+        build_number = ENV['FL_BUILD_NUMBER'] || '1'
+        UI.message("⚠️  Using fallback version info (project file not found)")
+      end
       
       UI.header("📱 Building and Archiving iOS Application")
       UI.message("📋 Build configuration:")
