@@ -11,13 +11,13 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.12.6-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.12.7-blue?style=for-the-badge)](#)
 [![Status](https://img.shields.io/badge/Status-✅_PRODUCTION_READY-success?style=for-the-badge)](#)
 [![Working](https://img.shields.io/badge/apple--deploy-✅_WORKING-brightgreen?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
 
-> **✅ v2.12.6 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
+> **✅ v2.12.7 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
 
 </div>
 
@@ -48,6 +48,29 @@
 - 🏗️ **Clean Architecture Foundation** - domain-driven design with 95%+ test coverage
 - 🔄 **Monolithic Stability** - proven reliability with comprehensive business logic
 - 🎯 **Apple API Integration** - clean abstraction layer for all Apple services
+
+---
+
+## 🚀 What's New in v2.12.7
+
+### 🔧 **FINAL FIX: Version Display Accuracy**
+**PROBLEM SOLVED:** Fastfile displays incorrect version numbers (1.0.0, build 1) instead of actual project values
+
+**FIXED ISSUES:**
+- ✅ **Enhanced project file detection** - robust multi-strategy search for .xcodeproj files
+- ✅ **Improved version parsing** - better regex patterns for MARKETING_VERSION and CURRENT_PROJECT_VERSION
+- ✅ **Working directory diagnostics** - detailed logging shows exactly where files are searched
+- ✅ **Robust error handling** - graceful fallback with comprehensive error reporting
+
+**TECHNICAL DETAILS:**
+- **Root Cause**: Project file detection failed in Homebrew environment due to working directory assumptions
+- **Solution**: Multi-strategy detection (scheme-based → glob pattern → direct file) with detailed logging
+- **Result**: Fastfile now correctly displays the same version numbers as the actual IPA build
+
+**How to Upgrade:**
+```bash
+brew upgrade apple-deploy
+```
 
 ---
 
@@ -151,7 +174,7 @@ brew upgrade apple-deploy
 
 ---
 
-## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.6!
+## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.7!
 
 ### Step 1: Install (30 seconds)
 ```bash
@@ -163,7 +186,7 @@ brew install apple-deploy
 brew upgrade apple-deploy
 ```
 
-> **🔧 NEW in v2.12.6:** Enhanced project file detection ensures version reading works with any iOS project! See [What's New](#-whats-new-in-v2126) for details.
+> **🔧 NEW in v2.12.7:** FINAL FIX for version display accuracy - Fastfile now shows correct version numbers! See [What's New](#-whats-new-in-v2127) for details.
 
 ### Step 2: Get Apple Credentials (2 minutes)
 1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
@@ -719,7 +742,7 @@ CI/CD environments and some developer machines reject certificates for code sign
 brew upgrade apple-deploy
 
 # Verify version
-apple-deploy version  # Should show v2.12.6+
+apple-deploy version  # Should show v2.12.7+
 ```
 
 **Note:** This fix is automatic and requires no configuration. It works silently during certificate setup.

@@ -221,56 +221,92 @@ platform :ios do
       end
       
       # Get version info from Xcode project (updated by deploy.sh)
-      # Try multiple possible project file locations
-      possible_project_files = [
-        "./#{scheme}.xcodeproj/project.pbxproj",
-        "./project.pbxproj",
-        "./*.xcodeproj/project.pbxproj"
-      ]
+      # Enhanced project file detection with robust working directory handling
+      current_dir = Dir.pwd
+      UI.message("🔍 Searching for project file in: #{current_dir}")
       
+      # Try multiple project file detection strategies
       project_file = nil
-      possible_project_files.each do |pattern|
-        if pattern.include?('*')
-          # Handle glob pattern
-          matches = Dir.glob(pattern)
-          if matches.any?
-            project_file = matches.first
-            break
+      
+      # Strategy 1: Direct scheme-based file
+      scheme_project_file = "./#{scheme}.xcodeproj/project.pbxproj"
+      if File.exist?(scheme_project_file)
+        project_file = scheme_project_file
+        UI.message("✅ Found scheme-based project file: #{project_file}")
+      else
+        UI.message("⚠️  Scheme-based project file not found: #{scheme_project_file}")
+        
+        # Strategy 2: Look for any .xcodeproj directory
+        xcodeproj_dirs = Dir.glob("*.xcodeproj").select { |f| File.directory?(f) }
+        UI.message("🔍 Found .xcodeproj directories: #{xcodeproj_dirs}")
+        
+        if xcodeproj_dirs.any?
+          # Use the first .xcodeproj directory found
+          xcodeproj_dir = xcodeproj_dirs.first
+          project_file = "#{xcodeproj_dir}/project.pbxproj"
+          
+          if File.exist?(project_file)
+            UI.message("✅ Found project file in .xcodeproj: #{project_file}")
+          else
+            UI.message("⚠️  project.pbxproj not found in: #{xcodeproj_dir}")
+            project_file = nil
           end
-        elsif File.exist?(pattern)
-          project_file = pattern
-          break
+        else
+          UI.message("⚠️  No .xcodeproj directories found")
+          
+          # Strategy 3: Direct project.pbxproj file (rare case)
+          if File.exist?("./project.pbxproj")
+            project_file = "./project.pbxproj"
+            UI.message("✅ Found direct project.pbxproj file")
+          else
+            UI.message("⚠️  No project.pbxproj file found")
+          end
         end
       end
       
       if project_file && File.exist?(project_file)
-        UI.message("📱 Found project file: #{project_file}")
+        UI.message("📱 Reading version info from project file: #{project_file}")
         
-        # Read marketing version from project
-        version_line = File.readlines(project_file).find { |line| line.include?('MARKETING_VERSION') }
-        if version_line
-          version = version_line.match(/MARKETING_VERSION = ([^;]*);/)[1].strip
-        else
+        begin
+          project_content = File.read(project_file)
+          
+          # Read marketing version from project with improved parsing
+          version_match = project_content.match(/MARKETING_VERSION\s*=\s*([^;]*);/)
+          if version_match
+            version = version_match[1].strip.gsub(/["']/, '')
+            UI.message("✅ Found MARKETING_VERSION: #{version}")
+          else
+            version = ENV['FL_VERSION'] || '1.0.0'
+            UI.message("⚠️  MARKETING_VERSION not found, using fallback: #{version}")
+          end
+          
+          # Read build number from project with improved parsing
+          build_match = project_content.match(/CURRENT_PROJECT_VERSION\s*=\s*([^;]*);/)
+          if build_match
+            build_number = build_match[1].strip.gsub(/["']/, '')
+            UI.message("✅ Found CURRENT_PROJECT_VERSION: #{build_number}")
+          else
+            build_number = ENV['FL_BUILD_NUMBER'] || '1'
+            UI.message("⚠️  CURRENT_PROJECT_VERSION not found, using fallback: #{build_number}")
+          end
+          
+          UI.message("📱 Successfully read version info from project:")
+          UI.message("   - Marketing Version: #{version}")
+          UI.message("   - Build Number: #{build_number}")
+          
+        rescue => read_error
+          UI.message("⚠️  Error reading project file: #{read_error.message}")
           version = ENV['FL_VERSION'] || '1.0.0'
-        end
-        
-        # Read build number from project
-        build_line = File.readlines(project_file).find { |line| line.include?('CURRENT_PROJECT_VERSION') }
-        if build_line
-          build_number = build_line.match(/CURRENT_PROJECT_VERSION = ([^;]*);/)[1].strip
-        else
           build_number = ENV['FL_BUILD_NUMBER'] || '1'
+          UI.message("⚠️  Using fallback version info due to read error")
         end
-        
-        UI.message("📱 Read from project file:")
-        UI.message("   - Marketing Version: #{version}")
-        UI.message("   - Build Number: #{build_number}")
       else
         # Fallback to environment variables
         version = ENV['FL_VERSION'] || '1.0.0'
         build_number = ENV['FL_BUILD_NUMBER'] || '1'
-        UI.message("⚠️  Using fallback version info (project file not found)")
-        UI.message("⚠️  Tried: #{possible_project_files.join(', ')}")
+        UI.message("⚠️  Using fallback version info (no project file found)")
+        UI.message("⚠️  Working directory: #{current_dir}")
+        UI.message("⚠️  Files in directory: #{Dir.glob('*').join(', ')}")
       end
       
       UI.header("📱 Building and Archiving iOS Application")
