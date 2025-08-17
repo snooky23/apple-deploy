@@ -112,6 +112,47 @@ module ConfigurationRepository
   def save_app_configuration(app_identifier, team_id, configuration)
     raise NotImplementedError, "Subclass must implement save_app_configuration"
   end
+
+  # Info.plist Operations for Privacy Validation
+  
+  # Parse Info.plist file for application
+  # @param info_plist_path [String] Path to Info.plist file
+  # @return [Hash] Parsed plist data as hash
+  # @raise [StandardError] If file cannot be read or parsed
+  def parse_info_plist(info_plist_path)
+    raise NotImplementedError, "Subclass must implement parse_info_plist"
+  end
+  
+  # Find Info.plist file for application
+  # @param app_identifier [String] Bundle identifier
+  # @param scheme [String] Xcode scheme name
+  # @param project_directory [String] Project root directory
+  # @return [String, nil] Path to Info.plist file or nil if not found
+  def find_info_plist(app_identifier, scheme, project_directory = '.')
+    raise NotImplementedError, "Subclass must implement find_info_plist"
+  end
+  
+  # Validate Info.plist structure and required keys
+  # @param info_plist_path [String] Path to Info.plist file
+  # @return [ValidationResult] Validation result with any issues found
+  def validate_info_plist_structure(info_plist_path)
+    raise NotImplementedError, "Subclass must implement validate_info_plist_structure"
+  end
+  
+  # Extract privacy usage descriptions from Info.plist
+  # @param info_plist_path [String] Path to Info.plist file
+  # @return [Hash] Privacy keys and their descriptions
+  def extract_privacy_usage_descriptions(info_plist_path)
+    raise NotImplementedError, "Subclass must implement extract_privacy_usage_descriptions"
+  end
+  
+  # Get linked frameworks for application (for privacy requirement detection)
+  # @param project_directory [String] Project root directory
+  # @param scheme [String] Xcode scheme name
+  # @return [Array<String>] List of linked framework names
+  def get_linked_frameworks(project_directory, scheme)
+    raise NotImplementedError, "Subclass must implement get_linked_frameworks"
+  end
   
   # Global Settings Operations
   

@@ -120,6 +120,178 @@ show_result_summary() {
     show_separator
 }
 
+# Privacy validation system for Info.plist compliance using Clean Architecture
+validate_privacy_usage_descriptions() {
+    local info_plist_path="$1"
+    local strict_mode="${2:-false}"
+    local validation_mode="${PRIVACY_VALIDATION:-strict}"
+    
+    # Skip validation if disabled
+    if [ "$validation_mode" = "skip" ]; then
+        log_info "🔒 Privacy validation skipped (mode: skip)"
+        return 0
+    fi
+    
+    log_info "🔒 Privacy Validation (mode: $validation_mode)"
+    log_debug "Info.plist path: $info_plist_path"
+    
+    # Find Info.plist if not provided or not found
+    if [ -z "$info_plist_path" ] || [ ! -f "$info_plist_path" ]; then
+        log_info "🔍 Searching for Info.plist file..."
+        
+        # Try common Info.plist locations
+        local possible_paths=(
+            "./$SCHEME/Info.plist"
+            "./$APP_IDENTIFIER/Info.plist"
+            "./Info.plist"
+            "./$SCHEME.xcodeproj/project.pbxproj"
+        )
+        
+        for path in "${possible_paths[@]}"; do
+            if [ -f "$path" ]; then
+                info_plist_path="$path"
+                log_success "✓ Found Info.plist: $info_plist_path"
+                break
+            fi
+        done
+        
+        if [ ! -f "$info_plist_path" ]; then
+            log_warning "⚠️ Info.plist not found - skipping privacy validation"
+            log_info "💡 Ensure Info.plist exists in your project for privacy validation"
+            return 0
+        fi
+    fi
+    
+    # Create temporary Ruby script for Clean Architecture validation
+    local temp_script=$(mktemp /tmp/privacy_validation_XXXXXX.rb)
+    local temp_result=$(mktemp /tmp/privacy_result_XXXXXX.json)
+    
+    cat > "$temp_script" << 'EOF'
+#!/usr/bin/env ruby
+
+# Add script directory to load path for Clean Architecture components
+script_dir = File.dirname(__FILE__)
+lib_path = File.join(script_dir, '..', 'scripts')
+$LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
+
+begin
+  require_relative '../scripts/domain/use_cases/validate_privacy_usage_descriptions'
+  require 'json'
+  
+  # Get command line arguments
+  info_plist_path = ARGV[0]
+  strict_mode = ARGV[1] == 'true'
+  result_file = ARGV[2]
+  
+  # Create validation request
+  request = ValidatePrivacyUsageDescriptionsRequest.new(
+    info_plist_path: info_plist_path,
+    strict_mode: strict_mode
+  )
+  
+  # Execute validation
+  use_case = ValidatePrivacyUsageDescriptions.new
+  result = use_case.execute(request)
+  
+  # Write result to file for shell consumption
+  File.write(result_file, result.to_json)
+  
+  # Exit with error code if validation failed
+  exit(result.success? ? 0 : 1)
+  
+rescue StandardError => e
+  error_result = {
+    success: false,
+    errors: [{
+      type: 'ruby_execution_error',
+      message: "Privacy validation failed: #{e.message}"
+    }],
+    warnings: [],
+    data: {}
+  }
+  
+  File.write(result_file, error_result.to_json)
+  exit(1)
+end
+EOF
+    
+    # Execute Ruby validation using Clean Architecture
+    log_debug "Executing Clean Architecture privacy validation..."
+    
+    if ruby "$temp_script" "$info_plist_path" "$strict_mode" "$temp_result" 2>/dev/null; then
+        validation_success=true
+        log_debug "✓ Privacy validation completed successfully"
+    else
+        validation_success=false
+        log_debug "❌ Privacy validation found issues"
+    fi
+    
+    # Parse and display results
+    if [ -f "$temp_result" ]; then
+        local result_json=$(cat "$temp_result")
+        
+        # Extract key information using basic JSON parsing
+        local error_count=$(echo "$result_json" | grep -o '"errors":\[' | wc -l)
+        local warning_count=$(echo "$result_json" | grep -o '"warnings":\[' | wc -l)
+        
+        # Display validation results
+        if [ "$validation_success" = "true" ]; then
+            log_success "✅ Privacy validation passed"
+            
+            # Show any warnings
+            if [ "$warning_count" -gt 0 ]; then
+                log_warning "⚠️ Found privacy validation warnings - consider addressing for better App Store review experience"
+            fi
+        else
+            log_error "❌ Privacy validation failed"
+            log_error "🚨 This may cause TestFlight upload rejection (ITMS-90683)"
+            
+            # Show fix guidance
+            log_info "💡 Fix Instructions:"
+            log_info "   1. Open your Info.plist file in Xcode"
+            log_info "   2. Add missing privacy usage description keys"
+            log_info "   3. Provide clear, user-friendly explanations"
+            log_info "   4. Run 'apple-deploy validate_privacy' to verify fixes"
+            log_info ""
+            log_info "📖 Privacy Guide: https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/requesting_access_to_protected_resources"
+            
+            # Fail deployment based on validation mode
+            if [ "$validation_mode" = "strict" ]; then
+                log_error "🛑 Deployment stopped due to privacy validation failure (mode: strict)"
+                cleanup_temp_files "$temp_script" "$temp_result"
+                return 1
+            elif [ "$validation_mode" = "warn" ]; then
+                log_warning "⚠️ Continuing deployment despite privacy issues (mode: warn)"
+                log_warning "🚨 TestFlight upload may still fail"
+            fi
+        fi
+    else
+        log_warning "⚠️ Could not parse privacy validation results"
+        if [ "$validation_mode" = "strict" ]; then
+            cleanup_temp_files "$temp_script" "$temp_result"
+            return 1
+        fi
+    fi
+    
+    # Cleanup temporary files
+    cleanup_temp_files "$temp_script" "$temp_result"
+    
+    # Return success unless strict mode validation failed
+    if [ "$validation_mode" = "strict" ] && [ "$validation_success" != "true" ]; then
+        return 1
+    fi
+    
+    return 0
+}
+
+# Helper function to clean up temporary files
+cleanup_temp_files() {
+    local files=("$@")
+    for file in "${files[@]}"; do
+        [ -f "$file" ] && rm -f "$file"
+    done
+}
+
 # Build verification system for IPA integrity and quality assurance
 verify_build_integrity() {
     local ipa_path="$1"
@@ -916,6 +1088,239 @@ validate_deployment_environment() {
     return $validation_errors
 }
 
+# Unified validation function using Clean Architecture
+validate_deployment_environment_unified() {
+    local validation_result=0
+    
+    show_header "COMPREHENSIVE VALIDATION SUITE" "🛡️"
+    
+    # Create temporary file for Ruby use case execution
+    local temp_validation_file="/tmp/apple_deploy_validation_$$.rb"
+    local temp_result_file="/tmp/apple_deploy_validation_result_$$.json"
+    
+    # Build validation request parameters
+    local validation_request="{"
+    [ -n "$APP_IDENTIFIER" ] && validation_request+='"app_identifier": "'$APP_IDENTIFIER'",'
+    [ -n "$TEAM_ID" ] && validation_request+='"team_id": "'$TEAM_ID'",'
+    [ -n "$SCHEME" ] && validation_request+='"scheme": "'$SCHEME'",'
+    [ -n "$APPLE_INFO_BASE_DIR" ] && validation_request+='"apple_info_dir": "'$APPLE_INFO_BASE_DIR'",'
+    validation_request+='"mode": "'$VALIDATION_MODE'",'
+    validation_request+='"strict_mode": '$VALIDATION_STRICT','
+    validation_request+='"project_directory": "."'
+    validation_request+="}"
+    
+    # Create Ruby execution script for Clean Architecture integration
+    cat > "$temp_validation_file" << 'RUBY_EOF'
+#!/usr/bin/env ruby
+# Unified Validation Execution Script for Clean Architecture Integration
+
+require 'json'
+require 'time'
+
+# Add scripts directory to load path - use absolute path for temp file execution
+scripts_base_dir = ENV['APPLE_DEPLOY_SCRIPTS_DIR'] || '/Users/avilevin/Workspace/iOS/Personal/ios-deploy-platform/scripts'
+$LOAD_PATH.unshift(scripts_base_dir)
+
+begin
+  require File.join(scripts_base_dir, 'domain/use_cases/validate_deployment_environment')
+  
+  # Get validation parameters from environment or command line
+  request_json = ARGV[0] || ENV['VALIDATION_REQUEST'] || '{}'
+  request_params = JSON.parse(request_json, symbolize_names: true)
+  
+  # Create validation request
+  validation_request = ValidateDeploymentEnvironmentRequest.new(
+    app_identifier: request_params[:app_identifier],
+    team_id: request_params[:team_id],
+    scheme: request_params[:scheme],
+    project_directory: request_params[:project_directory] || '.',
+    apple_info_dir: request_params[:apple_info_dir],
+    mode: request_params[:mode] || 'full',
+    strict_mode: request_params[:strict_mode] || false
+  )
+  
+  # Execute validation use case
+  use_case = ValidateDeploymentEnvironment.new
+  result = use_case.execute(validation_request)
+  
+  # Output result as JSON for shell script consumption
+  output = {
+    success: result.success?,
+    errors: result.errors,
+    warnings: result.warnings,
+    data: result.data,
+    timestamp: Time.now.utc.iso8601
+  }
+  
+  puts JSON.pretty_generate(output)
+  
+  # Exit with appropriate code
+  exit(result.success? ? 0 : 1)
+  
+rescue StandardError => e
+  # Handle any errors in validation execution
+  error_output = {
+    success: false,
+    errors: [{
+      type: 'execution_error',
+      message: "Validation execution failed: #{e.message}",
+      technical_details: e.backtrace&.first(3)
+    }],
+    warnings: [],
+    data: { execution_error: true },
+    timestamp: Time.now.utc.iso8601
+  }
+  
+  puts JSON.pretty_generate(error_output)
+  exit 1
+end
+RUBY_EOF
+    
+    # Make validation script executable
+    chmod +x "$temp_validation_file"
+    
+    # Execute Clean Architecture validation
+    show_status "info" "🔄 Executing comprehensive validation suite..."
+    
+    # Set environment variable for scripts directory
+    export APPLE_DEPLOY_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+    
+    # Try Clean Architecture validation first, fallback to shell validation
+    if ruby "$temp_validation_file" "$validation_request" > "$temp_result_file" 2>&1; then
+        validation_result=0
+        
+        # Parse and display results
+        if command -v jq >/dev/null 2>&1; then
+            # Enhanced results display with jq
+            local domain_results=$(cat "$temp_result_file" | jq -r '.data.domain_results // {}' 2>/dev/null)
+            local success_rate=$(cat "$temp_result_file" | jq -r '.data.success_rate // 0' 2>/dev/null)
+            
+            show_status "success" "🎉 Unified validation completed successfully"
+            show_status "info" "📊 Success Rate: ${success_rate}%"
+            
+            # Display domain-specific results
+            if [ -n "$domain_results" ] && [ "$domain_results" != "{}" ]; then
+                show_section "Validation Results by Domain" "📋"
+                echo "$domain_results" | jq -r 'to_entries[] | "  \(.key): \(if .value.success then "✅ PASS" else "❌ FAIL" end)"' 2>/dev/null || true
+            fi
+        else
+            # Fallback display without jq
+            show_status "success" "🎉 Unified validation completed successfully"
+            if [ -s "$temp_result_file" ]; then
+                show_status "info" "📊 Detailed results available in validation output"
+            fi
+        fi
+        
+        # Display next steps from validation result
+        if command -v jq >/dev/null 2>&1; then
+            local next_actions=$(cat "$temp_result_file" | jq -r '.data.next_actions[]?.message // empty' 2>/dev/null)
+            if [ -n "$next_actions" ]; then
+                show_section "Recommended Actions" "💡"
+                echo "$next_actions" | while read -r action; do
+                    [ -n "$action" ] && log_info "  • $action"
+                done
+            fi
+        fi
+    else
+        validation_result=1
+        
+        show_status "error" "❌ Unified validation failed"
+        
+        # Display errors from validation result
+        if [ -s "$temp_result_file" ] && command -v jq >/dev/null 2>&1; then
+            local errors=$(cat "$temp_result_file" | jq -r '.errors[]?.message // empty' 2>/dev/null)
+            if [ -n "$errors" ]; then
+                show_section "Validation Errors" "🚨"
+                echo "$errors" | while read -r error; do
+                    [ -n "$error" ] && log_error "  • $error"
+                done
+            fi
+            
+            local warnings=$(cat "$temp_result_file" | jq -r '.warnings[]?.message // empty' 2>/dev/null)
+            if [ -n "$warnings" ]; then
+                show_section "Validation Warnings" "⚠️"
+                echo "$warnings" | while read -r warning; do
+                    [ -n "$warning" ] && log_warning "  • $warning"
+                done
+            fi
+        else
+            # Fallback error display
+            show_status "error" "🔧 Clean Architecture validation failed, falling back to legacy validation"
+            if [ -s "$temp_result_file" ]; then
+                log_error "Ruby validation error:"
+                cat "$temp_result_file" | head -10
+            fi
+            
+            # Run fallback shell-based validation
+            show_status "info" "🔄 Running fallback validation using shell functions..."
+            fallback_validation_result=0
+            
+            # Run existing validation functions based on mode
+            case $VALIDATION_MODE in
+                "quick")
+                    show_section "Quick Validation" "🏃‍♂️"
+                    if ! validate_network_connectivity; then
+                        fallback_validation_result=1
+                    fi
+                    if ! validate_deployment_environment; then
+                        fallback_validation_result=1
+                    fi
+                    ;;
+                "comprehensive")
+                    show_section "Comprehensive Validation" "🔬"
+                    if ! validate_deployment_environment; then
+                        fallback_validation_result=1
+                    fi
+                    if ! validate_network_connectivity; then
+                        fallback_validation_result=1
+                    fi
+                    if [ -n "$APP_IDENTIFIER" ] && [ -n "$SCHEME" ]; then
+                        if ! validate_privacy_usage_descriptions; then
+                            fallback_validation_result=1
+                        fi
+                    fi
+                    if ! validate_api_credentials; then
+                        fallback_validation_result=1
+                    fi
+                    ;;
+                *)
+                    show_section "Full Validation" "🎯"
+                    if ! validate_deployment_environment; then
+                        fallback_validation_result=1
+                    fi
+                    if ! validate_network_connectivity; then
+                        fallback_validation_result=1
+                    fi
+                    if [ -n "$APP_IDENTIFIER" ] && [ -n "$SCHEME" ]; then
+                        if ! validate_privacy_usage_descriptions; then
+                            fallback_validation_result=1
+                        fi
+                    fi
+                    ;;
+            esac
+            
+            validation_result=$fallback_validation_result
+        fi
+    fi
+    
+    # Clean up temporary files
+    [ -f "$temp_validation_file" ] && rm -f "$temp_validation_file"
+    [ -f "$temp_result_file" ] && rm -f "$temp_result_file"
+    
+    # Display validation summary
+    if [ $validation_result -eq 0 ]; then
+        show_result_summary "true" "COMPREHENSIVE VALIDATION SUCCESSFUL - Environment ready for deployment!"
+    else
+        local details="🔧 REQUIRED ACTIONS:
+   1. Fix validation errors listed above
+   2. Re-run validation: apple-deploy validate [same parameters]
+   3. For specific guidance: apple-deploy help"
+        show_result_summary "false" "COMPREHENSIVE VALIDATION FAILED - Issues require attention" "$details"
+    fi
+    
+    return $validation_result
+}
+
 # Enhanced progress reporting functions
 show_progress_header() {
     local step_num=$1
@@ -1006,7 +1411,8 @@ if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  validate_marketing_version_with_resolution - Auto-resolve marketing version conflicts"
     echo "  smart_marketing_version_increment - Intelligent version increment with App Store sync"
     echo "  check_testflight_status_standalone - Check latest TestFlight build status with enhanced details"
-    echo "  validate              - Run comprehensive pre-flight validation (environment, network, API)"
+    echo "  validate              - Run comprehensive pre-deployment validation (environment, network, API, privacy, certificates)"
+    echo "  validate_privacy      - Validate privacy usage descriptions (prevent ITMS-90683 errors)"
     echo "  verify_build          - Standalone build verification (IPA integrity, structure, signing)"
     echo "  status                - Show certificate and profile status"
     echo "  cleanup               - Clean certificates and profiles"
@@ -1024,11 +1430,22 @@ if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  p12_password=\"YourPassword\"        - P12 certificate password (default: auto-generated)"
     echo "  version_bump=\"major|minor|patch\"   - Marketing version increment type"
     echo "  testflight_enhanced=\"true|false\"   - Enable extended TestFlight confirmation & enhanced logging (default: false)"
+    echo "  privacy_validation=\"strict|warn|skip\"   - Privacy usage descriptions validation mode (default: strict)"
     echo ""
     echo "Build Verification Parameters (for verify_build command):"
     echo "  ipa_path=\"/path/to/app.ipa\"         - Path to IPA file (auto-detected if not provided)"
     echo "  expected_version=\"1.0.0\"           - Expected version for verification"
     echo "  expected_build=\"123\"               - Expected build number for verification"
+    echo ""
+    echo "Validation Parameters (for validate command):"
+    echo "  mode=\"quick|full|comprehensive\"    - Validation scope (default: full)"
+    echo "  strict=\"true|false\"                - Treat warnings as errors (default: false)"  
+    echo "  app_identifier=\"com.your.app\"      - Bundle identifier for app-specific validation"
+    echo "  team_id=\"ABC1234567\"               - Team ID for certificate validation"
+    echo "  scheme=\"YourScheme\"                - Xcode scheme for project validation"
+    echo "  apple_info_dir=\"/path/to/info\"     - Apple info directory path"
+    echo "  quick=\"true\"                       - Shortcut for mode=\"quick\""
+    echo "  comprehensive=\"true\"               - Shortcut for mode=\"comprehensive\""
     echo ""
     echo "Logging Options (environment variables):"
     echo "  DEBUG_MODE=true                      - Enable detailed debug logging"
@@ -1081,6 +1498,14 @@ if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  ../scripts/deploy.sh build_and_upload team_id=\"YOUR_TEAM_ID\" testflight_enhanced=\"true\"  # Extended confirmation & logging"
     echo "  ../scripts/deploy.sh check_testflight_status_standalone team_id=\"YOUR_TEAM_ID\"            # Manual status check"
     echo ""
+    echo "  # Validation examples:"
+    echo "  ../scripts/deploy.sh validate                                        # Full validation suite"
+    echo "  ../scripts/deploy.sh validate mode=\"quick\"                          # Quick validation (environment + network)"
+    echo "  ../scripts/deploy.sh validate mode=\"comprehensive\" team_id=\"YOUR_TEAM_ID\" scheme=\"MyApp\"  # Deep validation"
+    echo "  ../scripts/deploy.sh validate strict=\"true\" app_identifier=\"com.your.app\"  # Strict mode (warnings as errors)"
+    echo "  ../scripts/deploy.sh validate_privacy scheme=\"MyApp\"                # Privacy validation only"
+    echo "  ../scripts/deploy.sh verify_build scheme=\"MyApp\"                    # Build verification only"
+    echo ""
     echo "Note: Parameters override config.env values, which override script defaults."
     exit 0
 fi
@@ -1090,12 +1515,16 @@ LANE="${1:-build_and_upload}"
 
 # Handle special validation command
 if [ "$LANE" = "validate" ]; then
-    show_header "STANDALONE PRE-FLIGHT VALIDATION" "🔍"
-    show_status "info" "This will test your environment, network connectivity, and API credentials"
+    show_header "COMPREHENSIVE PRE-DEPLOYMENT VALIDATION" "🛡️"
+    show_status "info" "This will test your environment, network, API credentials, privacy, and certificates"
     show_status "info" "before attempting a deployment. No actual deployment will be performed."
     
-    # Parse parameters for validation
+    # Parse parameters for unified validation
     shift # Remove the lane parameter
+    VALIDATION_MODE="full"  # Default mode
+    VALIDATION_STRICT="false"
+    VALIDATION_QUICK="false"
+    
     while [[ $# -gt 0 ]]; do
         case $1 in
             app_identifier=*)
@@ -1106,24 +1535,42 @@ if [ "$LANE" = "validate" ]; then
                 TEAM_ID="${1#*=}"
                 shift
                 ;;
-            api_key_path=*)
-                API_KEY_PATH="${1#*=}"
-                shift
-                ;;
-            api_key_id=*)
-                API_KEY_ID="${1#*=}"
-                shift
-                ;;
-            api_issuer_id=*)
-                API_ISSUER_ID="${1#*=}"
+            scheme=*)
+                SCHEME="${1#*=}"
                 shift
                 ;;
             apple_info_dir=*)
                 APPLE_INFO_BASE_DIR="${1#*=}"
                 shift
                 ;;
-            scheme=*)
-                SCHEME="${1#*=}"
+            mode=*)
+                VALIDATION_MODE="${1#*=}"
+                shift
+                ;;
+            strict=* | strict_mode=*)
+                VALIDATION_STRICT="${1#*=}"
+                shift
+                ;;
+            quick=*)
+                if [ "${1#*=}" = "true" ]; then
+                    VALIDATION_MODE="quick"
+                    VALIDATION_QUICK="true"
+                fi
+                shift
+                ;;
+            comprehensive=*)
+                if [ "${1#*=}" = "true" ]; then
+                    VALIDATION_MODE="comprehensive"
+                fi
+                shift
+                ;;
+            api_key_path=* | api_key_id=* | api_issuer_id=*)
+                # Parse legacy API parameters for compatibility
+                case $1 in
+                    api_key_path=*) API_KEY_PATH="${1#*=}" ;;
+                    api_key_id=*) API_KEY_ID="${1#*=}" ;;
+                    api_issuer_id=*) API_ISSUER_ID="${1#*=}" ;;
+                esac
                 shift
                 ;;
             *)
@@ -1132,41 +1579,34 @@ if [ "$LANE" = "validate" ]; then
         esac
     done
     
-    # Set up minimal required variables for validation
-    LANE="build_and_upload"  # For project validation
+    # Display validation mode
+    case $VALIDATION_MODE in
+        "quick")
+            show_status "info" "🏃‍♂️ Quick Mode: Environment and network checks only (30-60 seconds)"
+            ;;
+        "comprehensive")
+            show_status "info" "🔬 Comprehensive Mode: All validations + deep project analysis (2-3 minutes)"
+            ;;
+        *)
+            VALIDATION_MODE="full"
+            show_status "info" "🎯 Full Mode: Complete validation suite (1-2 minutes)"
+            ;;
+    esac
     
-    # Resolve paths if apple_info_dir is provided
-    if [ -n "$APPLE_INFO_BASE_DIR" ] && [ -n "$TEAM_ID" ]; then
-        resolve_apple_info_paths "$TEAM_ID" "$APPLE_INFO_BASE_DIR"
-        
-        # Auto-detect API key if not specified (consistent with main deployment)
-        if [ -z "$API_KEY_PATH" ]; then
-            api_key_files=$(find "$TEAM_APPLE_INFO_DIR" -name "AuthKey_*.p8" | sort)
-            api_key_count=$(echo "$api_key_files" | wc -l | tr -d ' ')
-            
-            if [ -n "$api_key_files" ] && [ "$api_key_count" -gt 0 ]; then
-                if [ "$api_key_count" -eq 1 ]; then
-                    API_KEY_PATH="$api_key_files"
-                else
-                    # Use most recent API key for validation
-                    API_KEY_PATH=$(echo "$api_key_files" | xargs ls -t | head -n1)
-                fi
-                
-                # Extract key ID from filename
-                if [ -z "$API_KEY_ID" ]; then
-                    API_KEY_ID=$(basename "$API_KEY_PATH" | sed 's/AuthKey_\([^.]*\)\.p8/\1/')
-                fi
-            fi
-        fi
+    if [ "$VALIDATION_STRICT" = "true" ]; then
+        show_status "info" "⚠️ Strict Mode: Warnings will be treated as errors"
     fi
     
-    # Run validation
-    if validate_deployment_environment; then
-        local next_steps="📋 NEXT STEPS:
-   1. Run deployment: ./scripts/deploy.sh build_and_upload ...
-   2. For certificates only: ./scripts/deploy.sh setup_certificates ...
-   3. Check status: ./scripts/deploy.sh status ..."
-        show_result_summary "true" "VALIDATION SUCCESSFUL - Your environment is ready for deployment!" "$next_steps"
+    # Run unified validation with Clean Architecture
+    if validate_deployment_environment_unified; then
+        next_steps="📋 NEXT STEPS:
+   1. ✅ Environment validated! Ready for deployment
+   2. Run: apple-deploy deploy [your parameters]
+   3. Or check specific areas:
+      • Privacy: apple-deploy validate_privacy scheme=\"$SCHEME\"
+      • Certificates: apple-deploy setup_certificates team_id=\"$TEAM_ID\"
+      • Build: apple-deploy verify_build scheme=\"$SCHEME\""
+        show_result_summary "true" "🎉 VALIDATION SUCCESSFUL - Environment ready for deployment!" "$next_steps"
         exit 0
     else
         show_status "info" "💡 TIP: Address the issues above, then re-run validation before deployment"
@@ -1225,6 +1665,105 @@ if [ "$LANE" = "verify_build" ]; then
     fi
 fi
 
+# Handle standalone privacy validation command
+if [ "$LANE" = "validate_privacy" ]; then
+    show_header "STANDALONE PRIVACY VALIDATION" "🔒"
+    show_status "info" "This will validate privacy usage descriptions in your Info.plist file"
+    show_status "info" "Prevents TestFlight upload failures due to missing purpose strings (ITMS-90683)"
+    
+    # Parse parameters for privacy validation
+    shift # Remove the lane parameter
+    info_plist_path=""
+    strict_mode="false"
+    scheme=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            info_plist_path=*)
+                info_plist_path="${1#*=}"
+                shift
+                ;;
+            strict_mode=*)
+                strict_mode="${1#*=}"
+                shift
+                ;;
+            scheme=*)
+                scheme="${1#*=}"
+                SCHEME="$scheme"
+                shift
+                ;;
+            app_identifier=*)
+                APP_IDENTIFIER="${1#*=}"
+                shift
+                ;;
+            privacy_validation=*)
+                PRIVACY_VALIDATION="${1#*=}"
+                shift
+                ;;
+            *)
+                log_warning "Unknown parameter: $1"
+                shift
+                ;;
+        esac
+    done
+    
+    # Set default privacy validation mode
+    if [ -z "$PRIVACY_VALIDATION" ]; then
+        PRIVACY_VALIDATION="strict"
+    fi
+    
+    # Auto-detect Info.plist if not provided
+    if [ -z "$info_plist_path" ] && [ -n "$scheme" ]; then
+        possible_paths=(
+            "./$scheme/Info.plist"
+            "./$scheme/$scheme-Info.plist"
+            "./Sources/$scheme/Info.plist"
+            "./Info.plist"
+        )
+        
+        for path in "${possible_paths[@]}"; do
+            if [ -f "$path" ]; then
+                info_plist_path="$path"
+                log_info "📱 Auto-detected Info.plist: $info_plist_path"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$info_plist_path" ]; then
+        # Try common fallback locations
+        for path in "./Info.plist" "./*/Info.plist"; do
+            if [ -f "$path" ]; then
+                info_plist_path="$path"
+                log_info "📱 Found Info.plist: $info_plist_path"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$info_plist_path" ] || [ ! -f "$info_plist_path" ]; then
+        log_error "❌ Info.plist file not found"
+        log_info "💡 Specify path: validate_privacy info_plist_path=\"./MyApp/Info.plist\""
+        log_info "💡 Or run from your iOS project directory"
+        exit 1
+    fi
+    
+    # Execute privacy validation
+    log_info "🔒 Validating privacy usage descriptions..."
+    if validate_privacy_usage_descriptions "$info_plist_path" "$strict_mode"; then
+        next_steps="📋 NEXT STEPS:
+   1. Your app is ready for TestFlight upload
+   2. Deploy: apple-deploy deploy ...
+   3. Or continue with normal development workflow"
+        show_result_summary "true" "PRIVACY VALIDATION SUCCESSFUL - No TestFlight upload issues detected!" "$next_steps"
+        exit 0
+    else
+        log_error "💡 TIP: Fix the privacy issues above to prevent TestFlight upload failures"
+        log_info "📖 Privacy Guide: https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/requesting_access_to_protected_resources"
+        exit 1
+    fi
+fi
+
 # Parse named parameters (e.g., app_identifier="com.example.app")
 shift # Remove the lane parameter
 while [[ $# -gt 0 ]]; do
@@ -1277,6 +1816,10 @@ while [[ $# -gt 0 ]]; do
             TESTFLIGHT_ENHANCED="${1#*=}"
             shift
             ;;
+        privacy_validation=*)
+            PRIVACY_VALIDATION="${1#*=}"
+            shift
+            ;;
         certificates_dir=*)
             CERT_DIR="${1#*=}"
             shift
@@ -1312,6 +1855,7 @@ while [[ $# -gt 0 ]]; do
             echo "  p12_password=\"YourPassword\""
             echo "  version_bump=\"major|minor|patch\""
             echo "  testflight_enhanced=\"true|false\""
+            echo "  privacy_validation=\"strict|warn|skip\""
             echo "  app_dir=\"./my_ios_app\""
             echo "  apple_info_dir=\"/shared/ios-teams\"  # Apple info base directory (REQUIRED)"
             echo "  api_key_path=\"AuthKey_XXXXX.p8\""
@@ -1742,6 +2286,67 @@ fi
 STEP2_END_TIME=$(date +%s)
 STEP2_DURATION=$((STEP2_END_TIME - STEP2_START_TIME))
 show_step_completion 2 "Setup FastLane Scripts" "true" "$STEP2_DURATION"
+
+# Step 2b: Privacy Validation
+STEP25_START_TIME=$(date +%s)
+show_progress_header "2b" "Privacy Validation" "10-20s"
+
+# Set default privacy validation mode if not specified
+if [ -z "$PRIVACY_VALIDATION" ]; then
+    PRIVACY_VALIDATION="strict"
+fi
+
+log_info "🔒 Checking privacy usage descriptions compliance..."
+log_debug "Privacy validation mode: $PRIVACY_VALIDATION"
+
+# Find Info.plist for privacy validation
+INFO_PLIST_PATH=""
+if [ -n "$SCHEME" ]; then
+    # Try scheme-based paths first
+    POSSIBLE_INFO_PLISTS=(
+        "./$SCHEME/Info.plist"
+        "./$SCHEME/$SCHEME-Info.plist"
+        "./Sources/$SCHEME/Info.plist"
+        "./Info.plist"
+    )
+else
+    # Fallback paths
+    POSSIBLE_INFO_PLISTS=(
+        "./Info.plist"
+        "./*/Info.plist"
+    )
+fi
+
+for plist_path in "${POSSIBLE_INFO_PLISTS[@]}"; do
+    if [ -f "$plist_path" ]; then
+        INFO_PLIST_PATH="$plist_path"
+        log_debug "Found Info.plist: $INFO_PLIST_PATH"
+        break
+    fi
+done
+
+# Execute privacy validation
+if validate_privacy_usage_descriptions "$INFO_PLIST_PATH"; then
+    log_success "✅ Privacy validation passed"
+    PRIVACY_VALIDATION_RESULT="passed"
+else
+    log_error "❌ Privacy validation failed"
+    PRIVACY_VALIDATION_RESULT="failed"
+    
+    # Handle validation failure based on mode
+    if [ "$PRIVACY_VALIDATION" = "strict" ]; then
+        STEP25_END_TIME=$(date +%s)
+        STEP25_DURATION=$((STEP25_END_TIME - STEP25_START_TIME))
+        show_step_completion "2b" "Privacy Validation" "false" "$STEP25_DURATION"
+        log_error "🛑 Deployment stopped due to privacy validation failure"
+        log_info "💡 Fix privacy issues and retry, or use privacy_validation=\"warn\" to continue"
+        exit 1
+    fi
+fi
+
+STEP25_END_TIME=$(date +%s)
+STEP25_DURATION=$((STEP25_END_TIME - STEP25_START_TIME))
+show_step_completion "2b" "Privacy Validation" "true" "$STEP25_DURATION"
 
 # Step 3: Verify Xcode project exists
 STEP3_START_TIME=$(date +%s)

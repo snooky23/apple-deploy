@@ -69,6 +69,93 @@ def cleanup_apple_certificates(team_id, api_key_path, api_key_id, api_issuer_id)
 end
 
 platform :ios do
+  desc "Privacy validation lane using Clean Architecture"
+  lane :validate_privacy_usage_descriptions do |options|
+    # Get parameters from environment variables
+    app_identifier = ENV['FL_APP_IDENTIFIER'] || options[:app_identifier]
+    scheme = ENV['FL_SCHEME'] || options[:scheme]
+    strict_mode = ENV['FL_PRIVACY_STRICT_MODE'] == 'true' || options[:strict_mode] == true
+    
+    UI.header("🔒 Privacy Usage Descriptions Validation")
+    UI.message("Validating Info.plist privacy compliance to prevent TestFlight upload failures")
+    
+    # Find Info.plist file
+    info_plist_path = nil
+    possible_paths = [
+      "./#{scheme}/Info.plist",
+      "./#{scheme}/#{scheme}-Info.plist", 
+      "./Sources/#{scheme}/Info.plist",
+      "./Info.plist"
+    ]
+    
+    possible_paths.each do |path|
+      if File.exist?(path)
+        info_plist_path = path
+        UI.message("📱 Found Info.plist: #{info_plist_path}")
+        break
+      end
+    end
+    
+    if info_plist_path.nil?
+      UI.user_error!("❌ Info.plist file not found. Checked paths: #{possible_paths.join(', ')}")
+    end
+    
+    begin
+      # Use Clean Architecture - ValidatePrivacyUsageDescriptions Use Case
+      require_relative '../domain/use_cases/validate_privacy_usage_descriptions'
+      
+      validation_request = ValidatePrivacyUsageDescriptionsRequest.new(
+        info_plist_path: info_plist_path,
+        strict_mode: strict_mode
+      )
+      
+      validate_use_case = ValidatePrivacyUsageDescriptions.new
+      validation_result = validate_use_case.execute(validation_request)
+      
+      if validation_result.success?
+        UI.success("✅ Privacy validation passed via Clean Architecture")
+        UI.message("🔒 Found #{validation_result.data[:total_privacy_keys]} privacy usage descriptions")
+        
+        if validation_result.has_warnings?
+          UI.important("⚠️ Found #{validation_result.warning_count} warnings - consider addressing for better App Store review")
+          validation_result.warning_messages.each do |warning|
+            UI.message("   • #{warning}")
+          end
+        end
+      else
+        UI.error("❌ Privacy validation failed")
+        UI.error("🚨 This may cause TestFlight upload rejection (ITMS-90683)")
+        
+        validation_result.error_messages.each do |error|
+          UI.error("   • #{error}")
+        end
+        
+        # Show fix instructions
+        UI.message("")
+        UI.message("💡 Fix Instructions:")
+        UI.message("   1. Open your Info.plist file in Xcode")
+        UI.message("   2. Add missing privacy usage description keys")
+        UI.message("   3. Provide clear, user-friendly explanations")
+        UI.message("")
+        UI.message("📖 Privacy Guide: https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/requesting_access_to_protected_resources")
+        
+        if strict_mode
+          UI.user_error!("Privacy validation failed in strict mode")
+        else
+          UI.important("⚠️ Continuing despite privacy validation failure (non-strict mode)")
+        end
+      end
+      
+    rescue => e
+      UI.error("❌ Privacy validation error: #{e.message}")
+      if strict_mode
+        UI.user_error!("Privacy validation failed due to error: #{e.message}")
+      else
+        UI.important("⚠️ Skipping privacy validation due to error")
+      end
+    end
+  end
+
   desc "Simple certificate creation and TestFlight upload"
   lane :build_and_upload do |options|
     # Get parameters from environment variables (set by deploy.sh)
@@ -307,6 +394,31 @@ platform :ios do
         UI.message("⚠️  Using fallback version info (no project file found)")
         UI.message("⚠️  Working directory: #{current_dir}")
         UI.message("⚠️  Files in directory: #{Dir.glob('*').join(', ')}")
+      end
+      
+      # Privacy validation step (integrated from Clean Architecture)
+      privacy_validation_mode = ENV['FL_PRIVACY_VALIDATION'] || 'strict'
+      
+      if privacy_validation_mode != 'skip'
+        UI.header("🔒 Privacy Validation")
+        UI.message("Checking privacy usage descriptions to prevent TestFlight upload failures")
+        
+        begin
+          # Call privacy validation lane with current context
+          validate_privacy_usage_descriptions(
+            app_identifier: app_identifier,
+            scheme: scheme,
+            strict_mode: (privacy_validation_mode == 'strict')
+          )
+        rescue => privacy_error
+          if privacy_validation_mode == 'strict'
+            UI.user_error!("Privacy validation failed in strict mode: #{privacy_error.message}")
+          else
+            UI.important("⚠️ Privacy validation error (continuing in #{privacy_validation_mode} mode): #{privacy_error.message}")
+          end
+        end
+      else
+        UI.message("🔒 Privacy validation skipped (mode: skip)")
       end
       
       UI.header("📱 Building and Archiving iOS Application")

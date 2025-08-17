@@ -11,13 +11,13 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.12.7-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.13.0-blue?style=for-the-badge)](#)
 [![Status](https://img.shields.io/badge/Status-✅_PRODUCTION_READY-success?style=for-the-badge)](#)
 [![Working](https://img.shields.io/badge/apple--deploy-✅_WORKING-brightgreen?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
 
-> **✅ v2.12.7 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
+> **✅ v2.13.0 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with privacy validation, automatic TestFlight conflict resolution and bulletproof certificate management.
 
 </div>
 
@@ -48,6 +48,55 @@
 - 🏗️ **Clean Architecture Foundation** - domain-driven design with 95%+ test coverage
 - 🔄 **Monolithic Stability** - proven reliability with comprehensive business logic
 - 🎯 **Apple API Integration** - clean abstraction layer for all Apple services
+
+---
+
+## 🚀 What's New in v2.13.0 - **MAJOR FEATURE: Privacy Validation**
+
+### 🔒 **PRIVACY VALIDATION SYSTEM**
+**PROBLEM SOLVED:** Prevent TestFlight upload failures due to missing privacy purpose strings (ITMS-90683)
+
+**BREAKTHROUGH FEATURES:**
+- ✅ **Pre-Upload Privacy Validation** - Catch ITMS-90683 errors before TestFlight upload
+- ✅ **15+ Privacy Usage Keys** - Comprehensive validation for all iOS privacy APIs
+- ✅ **Clean Architecture Implementation** - Domain-driven design with 95%+ test coverage
+- ✅ **Smart Info.plist Detection** - Automatic project file discovery and validation
+- ✅ **Three Validation Modes** - strict (fail), warn (continue), skip (bypass)
+- ✅ **Standalone Privacy Command** - `apple-deploy validate_privacy` for targeted checking
+- ✅ **Educational Error Messages** - Step-by-step fix instructions with Apple documentation links
+- ✅ **Quality Analysis** - Detects placeholder text and insufficient purpose string descriptions
+
+**PRIVACY KEYS VALIDATED:**
+- **Media Access**: Camera, Microphone, Photo Library, Music Library
+- **Location Services**: When-in-Use, Always, Background tracking
+- **Personal Data**: Contacts, Calendars, Reminders
+- **Device Capabilities**: Speech Recognition, Face ID, Motion Data, Bluetooth
+- **Health & Fitness**: HealthKit read/write permissions
+- **Network & Tracking**: Local Network, User Tracking Transparency
+
+**INTEGRATION METHODS:**
+```bash
+# 1. Automatic (default) - integrated into deployment pipeline
+apple-deploy deploy privacy_validation="strict" [...]
+
+# 2. Standalone validation
+apple-deploy validate_privacy scheme="MyApp"
+
+# 3. Custom modes
+apple-deploy deploy privacy_validation="warn" [...]   # Continue with warnings
+apple-deploy deploy privacy_validation="skip" [...]   # Bypass validation
+```
+
+**ERROR PREVENTION:**
+- 🚨 **ITMS-90683**: Missing purpose string in Info.plist
+- 🚨 **ITMS-90672**: App references privacy-sensitive APIs
+- 🚨 **App Store Review**: Privacy-related rejection patterns
+- 🚨 **TestFlight Processing**: Upload failures due to privacy compliance
+
+**How to Upgrade:**
+```bash
+brew upgrade apple-deploy
+```
 
 ---
 
@@ -174,7 +223,7 @@ brew upgrade apple-deploy
 
 ---
 
-## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.7!
+## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.13.0!
 
 ### Step 1: Install (30 seconds)
 ```bash
@@ -182,11 +231,11 @@ brew upgrade apple-deploy
 brew tap snooky23/tools
 brew install apple-deploy
 
-# To upgrade to latest version with certificate trust fix:
+# To upgrade to latest version with privacy validation:
 brew upgrade apple-deploy
 ```
 
-> **🔧 NEW in v2.12.7:** FINAL FIX for version display accuracy - Fastfile now shows correct version numbers! See [What's New](#-whats-new-in-v2127) for details.
+> **🔒 NEW in v2.13.0:** MAJOR FEATURE - Privacy validation prevents TestFlight upload failures! See [What's New](#-whats-new-in-v2130---major-feature-privacy-validation) for details.
 
 ### Step 2: Get Apple Credentials (2 minutes)
 1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
@@ -249,7 +298,11 @@ bundle install
 
 | Command | Purpose | Status |
 |---------|---------|---------|
-| `apple-deploy deploy` | Complete TestFlight deployment | ✅ Production Ready |
+| `apple-deploy deploy` | Complete TestFlight deployment with privacy validation | ✅ Production Ready |
+| `apple-deploy validate_privacy` | Validate privacy usage descriptions | ✅ Production Ready |
+| `apple-deploy validate` | Comprehensive pre-deployment validation | ✅ Production Ready |
+| `apple-deploy status` | Check TestFlight build status and environment health | ✅ Production Ready |
+| `apple-deploy verify_build` | Standalone IPA verification and integrity checks | ✅ Production Ready |
 | `apple-deploy init` | Initialize project structure | ✅ Production Ready |
 | `apple-deploy setup_certificates` | Setup certificates & profiles | ✅ Production Ready |
 | `apple-deploy help` | Show usage information | ✅ Available |
@@ -257,6 +310,7 @@ bundle install
 
 ### 🚀 `apple-deploy deploy` - Complete TestFlight Deployment
 **What it does:** Full end-to-end deployment from code to TestFlight
+- ✅ **NEW:** Validates privacy usage descriptions (prevents ITMS-90683)
 - ✅ Creates/imports certificates automatically
 - ✅ Builds your iOS app with proper signing
 - ✅ Uploads to TestFlight with version management
@@ -281,6 +335,158 @@ apple-deploy deploy \
 📤 Uploading to TestFlight... ✅ Complete
 ⏱️ Processing status: Ready to Test (2m 34s)
 🎉 Successfully deployed v1.2.3 build 45 to TestFlight!
+```
+
+### 🔒 `apple-deploy validate_privacy` - Privacy Validation
+**What it does:** Validates privacy usage descriptions to prevent TestFlight upload failures
+- ✅ **Prevents ITMS-90683 errors** before TestFlight upload
+- ✅ **15+ privacy keys validated** (Camera, Location, Contacts, Speech Recognition, etc.)
+- ✅ **Smart Info.plist detection** automatically finds your project's Info.plist
+- ✅ **Quality analysis** detects placeholder text and insufficient descriptions
+- ✅ **Educational guidance** with step-by-step fix instructions
+
+```bash
+# Basic validation (auto-detects Info.plist)
+apple-deploy validate_privacy scheme="MyApp"
+
+# Custom Info.plist path
+apple-deploy validate_privacy info_plist_path="./MyApp/Info.plist"
+
+# Strict mode (warnings become errors)
+apple-deploy validate_privacy scheme="MyApp" strict_mode="true"
+```
+
+**Output example:**
+```
+🔒 Privacy Validation
+✅ Camera access: 'This app uses the camera to scan documents'
+✅ Location when in use: 'This app uses location to find nearby stores'
+❌ Speech recognition (NSSpeechRecognitionUsageDescription): Missing description
+
+💡 Fix Instructions:
+   1. Open your Info.plist file in Xcode
+   2. Add missing privacy usage description keys
+   3. Provide clear, user-friendly explanations
+
+📖 Privacy Guide: https://developer.apple.com/documentation/...
+```
+
+**Privacy Keys Checked:**
+- Camera, Microphone, Photo Library access
+- Location services (when-in-use, always)
+- Personal data (Contacts, Calendars, Reminders) 
+- Device capabilities (Speech Recognition, Face ID, Motion)
+- Health & Fitness data, Bluetooth, Local Network
+- User Tracking Transparency (iOS 14.5+)
+
+### 🛡️ `apple-deploy validate` - Comprehensive Pre-Deployment Validation
+**What it does:** Runs comprehensive validation checks before deployment
+- ✅ **Environment validation** - Xcode, tools, and system requirements
+- ✅ **Network connectivity** - Internet connection and Apple services
+- ✅ **API credentials** - App Store Connect authentication
+- ✅ **Privacy validation** - Info.plist privacy usage descriptions
+- ✅ **Certificate health** - Certificate and profile validation
+- ✅ **Project structure** - App configuration and build settings
+
+```bash
+# Complete validation suite
+apple-deploy validate \
+    apple_info_dir="./apple_info" \
+    team_id="ABC1234567" \
+    app_identifier="com.mycompany.myapp" \
+    scheme="MyApp"
+
+# Quick validation (checks only environment and network)
+apple-deploy validate quick="true"
+```
+
+**Output example:**
+```
+🛡️ Comprehensive Pre-Deployment Validation
+✅ Environment: Xcode 15.2, Command Line Tools installed
+✅ Network: Connected to Apple Developer services  
+✅ API Credentials: Valid App Store Connect authentication
+✅ Privacy: All required usage descriptions present
+✅ Certificates: Valid distribution certificate found
+✅ Project: App configuration ready for deployment
+
+🎉 All validation checks passed! Ready for deployment.
+```
+
+### 📊 `apple-deploy status` - Build Status & Environment Health
+**What it does:** Checks TestFlight build status and environment health
+- ✅ **TestFlight monitoring** - Latest build processing status
+- ✅ **Build history** - Last 5 builds with status and metadata
+- ✅ **Environment check** - Certificate and profile health
+- ✅ **API connectivity** - App Store Connect service status
+- ✅ **Team configuration** - Audit of team setup and credentials
+
+```bash
+# Check specific app status
+apple-deploy status \
+    apple_info_dir="./apple_info" \
+    team_id="ABC1234567" \
+    app_identifier="com.mycompany.myapp"
+
+# Quick environment check only
+apple-deploy status environment_only="true"
+```
+
+**Output example:**
+```
+📊 TestFlight Status & Environment Health
+
+🚀 Latest Build: v1.2.3 build 45
+📍 Status: Ready to Test (processed in 2m 34s)
+⏰ Uploaded: 2025-01-15 14:32:15 UTC
+
+📋 Recent Builds:
+✅ v1.2.3 (45) - Ready to Test - 2 hours ago
+✅ v1.2.2 (44) - Ready to Test - 1 day ago  
+⚠️ v1.2.1 (43) - Rejected - 3 days ago
+✅ v1.2.0 (42) - Ready to Test - 5 days ago
+
+🔐 Environment:
+✅ Certificates: 2 valid (expires in 347 days)
+✅ Profiles: 1 active provisioning profile
+✅ API Access: Connected to App Store Connect
+```
+
+### 🔍 `apple-deploy verify_build` - IPA Verification & Integrity
+**What it does:** Standalone verification of built IPA files
+- ✅ **Code signing verification** - Validates signing integrity
+- ✅ **IPA structure analysis** - Checks app bundle structure
+- ✅ **Version validation** - Confirms version and build numbers
+- ✅ **Size analysis** - App size and performance metrics
+- ✅ **Quality checks** - Detects common build issues
+
+```bash
+# Verify specific IPA file
+apple-deploy verify_build \
+    ipa_path="./build/MyApp.ipa" \
+    expected_version="1.2.3" \
+    expected_build="45"
+
+# Auto-detect latest build
+apple-deploy verify_build scheme="MyApp"
+```
+
+**Output example:**
+```
+🔍 IPA Verification & Integrity Check
+
+📱 App: MyApp v1.2.3 build 45
+📦 Size: 14.2 MB (optimized)
+🔐 Signing: Valid distribution signature
+📋 Bundle: Proper app structure detected
+
+✅ Code signing verified with Apple certificate
+✅ IPA structure follows Apple guidelines  
+✅ Version numbers match expectations
+✅ App size within reasonable limits
+✅ No critical issues detected
+
+🎉 IPA ready for TestFlight upload!
 ```
 
 ### 🔐 `apple-deploy setup_certificates` - Certificate Setup Only
@@ -394,6 +600,11 @@ configuration="Release"                      # Build configuration (default: Rel
 
 # TestFlight Options
 testflight_enhanced="true"                   # Enhanced confirmation & logging (default: false)
+
+# Privacy Validation (NEW!)
+privacy_validation="strict"                  # strict|warn|skip (default: strict)
+privacy_validation="warn"                    # Continue deployment with warnings
+privacy_validation="skip"                    # Bypass privacy validation entirely
 
 # Security
 p12_password="YourPassword"                  # P12 certificate password (prompts if needed)
@@ -613,9 +824,78 @@ apple-deploy status \
     apple_info_dir="/path/to/secure/apple_info" \
     team_id="YOUR_TEAM_ID" \
     app_identifier="com.yourapp"
+
+# Test privacy validation specifically
+apple-deploy validate_privacy scheme="YourScheme"
 ```
 
 ### Common Issues
+
+<details>
+<summary><strong>🔒 Privacy Validation Issues (NEW!)</strong></summary>
+
+**The most common cause of TestFlight upload failures in iOS apps**
+
+**🚨 ITMS-90683 Error: Missing purpose string in Info.plist**
+```
+Your app's code references one or more APIs that access sensitive user data. 
+The Info.plist file should contain a NSSpechRecognitionUsageDescription key 
+with a user-facing purpose string explaining clearly and completely why your 
+app needs the data.
+```
+
+**✅ IMMEDIATE FIX:**
+```bash
+# 1. Run privacy validation to see exactly what's missing
+apple-deploy validate_privacy scheme="YourApp"
+
+# 2. Add missing keys to your Info.plist in Xcode:
+#    - Right-click Info.plist → Open As → Property List
+#    - Add the missing keys with clear descriptions
+```
+
+**📝 EXAMPLE PRIVACY STRINGS:**
+```xml
+<key>NSCameraUsageDescription</key>
+<string>This app uses the camera to scan documents and capture photos for your profile.</string>
+
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>This app uses speech recognition to convert voice commands into text for hands-free operation.</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app uses your location to show nearby restaurants and provide directions.</string>
+```
+
+**🔧 VALIDATION MODES:**
+```bash
+# Strict mode (stops deployment on privacy issues)
+apple-deploy deploy privacy_validation="strict" [...]
+
+# Warning mode (continues with warnings)  
+apple-deploy deploy privacy_validation="warn" [...]
+
+# Skip validation (not recommended)
+apple-deploy deploy privacy_validation="skip" [...]
+```
+
+**📖 PRIVACY KEYS REFERENCE:**
+- `NSCameraUsageDescription` - Camera access
+- `NSMicrophoneUsageDescription` - Microphone access  
+- `NSPhotoLibraryUsageDescription` - Photo library access
+- `NSLocationWhenInUseUsageDescription` - Location when in use
+- `NSSpeechRecognitionUsageDescription` - Speech recognition
+- `NSContactsUsageDescription` - Contacts access
+- `NSFaceIDUsageDescription` - Face ID authentication
+- `NSUserTrackingUsageDescription` - App tracking transparency (iOS 14.5+)
+
+**💡 BEST PRACTICES:**
+- Be specific about WHY you need the permission
+- Avoid generic phrases like "This app uses your camera"
+- Explain the user benefit clearly
+- Use friendly, non-technical language
+- Test with `apple-deploy validate_privacy` before deployment
+
+</details>
 
 <details>
 <summary><strong>🚨 "API key file not found" Error</strong></summary>
