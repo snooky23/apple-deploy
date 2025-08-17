@@ -11,7 +11,7 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.13.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.13.2-blue?style=for-the-badge)](#)
 [![Status](https://img.shields.io/badge/Status-✅_PRODUCTION_READY-success?style=for-the-badge)](#)
 [![Working](https://img.shields.io/badge/apple--deploy-✅_WORKING-brightgreen?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
