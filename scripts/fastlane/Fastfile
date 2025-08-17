@@ -221,9 +221,31 @@ platform :ios do
       end
       
       # Get version info from Xcode project (updated by deploy.sh)
-      project_file = "./#{scheme}.xcodeproj/project.pbxproj"
+      # Try multiple possible project file locations
+      possible_project_files = [
+        "./#{scheme}.xcodeproj/project.pbxproj",
+        "./project.pbxproj",
+        "./*.xcodeproj/project.pbxproj"
+      ]
       
-      if File.exist?(project_file)
+      project_file = nil
+      possible_project_files.each do |pattern|
+        if pattern.include?('*')
+          # Handle glob pattern
+          matches = Dir.glob(pattern)
+          if matches.any?
+            project_file = matches.first
+            break
+          end
+        elsif File.exist?(pattern)
+          project_file = pattern
+          break
+        end
+      end
+      
+      if project_file && File.exist?(project_file)
+        UI.message("📱 Found project file: #{project_file}")
+        
         # Read marketing version from project
         version_line = File.readlines(project_file).find { |line| line.include?('MARKETING_VERSION') }
         if version_line
@@ -248,6 +270,7 @@ platform :ios do
         version = ENV['FL_VERSION'] || '1.0.0'
         build_number = ENV['FL_BUILD_NUMBER'] || '1'
         UI.message("⚠️  Using fallback version info (project file not found)")
+        UI.message("⚠️  Tried: #{possible_project_files.join(', ')}")
       end
       
       UI.header("📱 Building and Archiving iOS Application")

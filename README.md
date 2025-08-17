@@ -11,13 +11,13 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.12.5-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.12.6-blue?style=for-the-badge)](#)
 [![Status](https://img.shields.io/badge/Status-✅_PRODUCTION_READY-success?style=for-the-badge)](#)
 [![Working](https://img.shields.io/badge/apple--deploy-✅_WORKING-brightgreen?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
 
-> **✅ v2.12.5 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
+> **✅ v2.12.6 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
 
 </div>
 
@@ -48,6 +48,29 @@
 - 🏗️ **Clean Architecture Foundation** - domain-driven design with 95%+ test coverage
 - 🔄 **Monolithic Stability** - proven reliability with comprehensive business logic
 - 🎯 **Apple API Integration** - clean abstraction layer for all Apple services
+
+---
+
+## 🚀 What's New in v2.12.6
+
+### 🔧 **Critical Fix: Project File Detection Enhancement**
+**PROBLEM SOLVED:** Fastfile couldn't find project files with different naming patterns, causing version fallback to defaults
+
+**FIXED ISSUES:**
+- ✅ **Enhanced project file detection** - tries multiple file path patterns automatically
+- ✅ **Robust glob pattern matching** - finds .xcodeproj files regardless of name
+- ✅ **Better error diagnostics** - shows exactly which paths were tried when file not found
+- ✅ **Universal compatibility** - works with any iOS project structure and naming convention
+
+**TECHNICAL DETAILS:**
+- **Root Cause**: Fastfile assumed specific project file naming (./scheme.xcodeproj/project.pbxproj)
+- **Solution**: Multi-pattern search including glob patterns for .xcodeproj detection
+- **Result**: Automatic version reading works regardless of project file location or name
+
+**How to Upgrade:**
+```bash
+brew upgrade apple-deploy
+```
 
 ---
 
@@ -128,7 +151,7 @@ brew upgrade apple-deploy
 
 ---
 
-## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.5!
+## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.6!
 
 ### Step 1: Install (30 seconds)
 ```bash
@@ -140,7 +163,7 @@ brew install apple-deploy
 brew upgrade apple-deploy
 ```
 
-> **🔧 NEW in v2.12.5:** Critical version mismatch fix ensures automatic conflict resolution works perfectly! See [What's New](#-whats-new-in-v2125) for details.
+> **🔧 NEW in v2.12.6:** Enhanced project file detection ensures version reading works with any iOS project! See [What's New](#-whats-new-in-v2126) for details.
 
 ### Step 2: Get Apple Credentials (2 minutes)
 1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
@@ -696,7 +719,7 @@ CI/CD environments and some developer machines reject certificates for code sign
 brew upgrade apple-deploy
 
 # Verify version
-apple-deploy version  # Should show v2.12.5+
+apple-deploy version  # Should show v2.12.6+
 ```
 
 **Note:** This fix is automatic and requires no configuration. It works silently during certificate setup.
