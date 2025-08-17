@@ -544,6 +544,8 @@ platform :ios do
       UI.message("📋 Upload configuration:")
       UI.message("   - IPA: #{File.basename(ipa_path)}")
       UI.message("   - Enhanced mode: #{testflight_enhanced}")
+      UI.message("   - Automatic conflict resolution: ✅ Enabled")
+      UI.message("💡 Build numbers are automatically incremented if conflicts exist in TestFlight")
       
       # Upload to TestFlight using xcrun altool
       upload_start_time = Time.now

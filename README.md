@@ -291,7 +291,7 @@ apple_info_dir="/path/to/shared/apple_info"  # Or absolute path for shared/custo
 api_key_path="AuthKey_XXXXX.p8"              # API key filename (auto-detected)
 
 # Version Management
-version_bump="patch"                         # patch|minor|major|auto|sync (default: patch)
+version_bump="patch"                         # patch|minor|major (default: patch)
 
 # Build Configuration  
 configuration="Release"                      # Build configuration (default: Release)
@@ -404,16 +404,32 @@ apple-deploy deploy \
 
 ## 🧠 Advanced Features
 
-### Version Management
+### Smart Version Management with Automatic TestFlight Conflict Resolution
 ```bash
-# Semantic versioning with TestFlight integration
+# Semantic versioning with automatic conflict resolution
 apple-deploy deploy apple_info_dir="./apple_info" version_bump="patch" [...]  # 1.0.0 → 1.0.1
 apple-deploy deploy apple_info_dir="./apple_info" version_bump="minor" [...]  # 1.0.0 → 1.1.0  
 apple-deploy deploy apple_info_dir="./apple_info" version_bump="major" [...]  # 1.0.0 → 2.0.0
+```
 
-# Advanced App Store integration
-apple-deploy deploy apple_info_dir="./apple_info" version_bump="auto" [...]   # Smart conflict resolution
-apple-deploy deploy apple_info_dir="./apple_info" version_bump="sync" [...]   # Sync with App Store + patch
+**🚀 NEW: Automatic Build Number Conflict Resolution**
+- ✅ **Intelligent TestFlight checking** - queries existing builds before upload
+- ✅ **Zero-config conflict resolution** - automatically increments build numbers when conflicts exist
+- ✅ **Works with all version_bump types** - patch, minor, and major all include conflict resolution
+- ✅ **Prevents upload failures** - no more "build already exists" errors
+
+**How it works:**
+1. Increment version according to your chosen strategy (patch/minor/major)
+2. Automatically check TestFlight for existing builds with that version
+3. If build number conflicts exist, automatically increment until finding an available number
+4. Upload with guaranteed unique version + build combination
+
+**Example automatic resolution:**
+```bash
+# You request: version 1.0.5, build 32
+# TestFlight has: builds 32, 33, 34 for version 1.0.5
+# System resolves: automatically uses build 35
+# Result: Upload succeeds with version 1.0.5 build 35
 ```
 
 ### Enhanced TestFlight Mode

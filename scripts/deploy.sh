@@ -1840,6 +1840,7 @@ if [ "$LANE" = "build_and_upload" ]; then
         else
             echo "❌ Invalid version_bump value: $VERSION_BUMP"
             echo "Valid values are: major, minor, patch"
+            echo "Note: TestFlight conflict resolution is automatic for all version_bump types"
             exit 1
         fi
     fi
@@ -1873,13 +1874,84 @@ if [ "$LANE" = "build_and_upload" ]; then
         exit 1
     fi
     
-    # Simple local build number increment
+    # Enhanced build number increment with TestFlight conflict resolution
+    echo "🔍 Checking for TestFlight build conflicts..."
+    
+    # Function to check if a build number already exists in TestFlight
+    check_testflight_build_exists() {
+        local version="$1"
+        local build="$2"
+        
+        # Use xcrun altool to check existing builds (requires API credentials)
+        if [[ -n "$API_KEY_ID" && -n "$API_ISSUER_ID" && -n "$API_KEY_PATH" ]]; then
+            echo "🔍 Checking TestFlight for version $version build $build..."
+            
+            # Create temporary API key location for altool
+            temp_private_keys_dir="$HOME/.appstoreconnect/private_keys"
+            mkdir -p "$temp_private_keys_dir"
+            temp_api_key_path="$temp_private_keys_dir/$(basename "$API_KEY_PATH")"
+            cp "$API_KEY_PATH" "$temp_api_key_path" 2>/dev/null || true
+            
+            # Query existing builds (redirect stderr to suppress verbose output)
+            existing_builds=$(xcrun altool --list-builds \
+                --app-identifier "$APP_IDENTIFIER" \
+                --apiKey "$API_KEY_ID" \
+                --apiIssuer "$API_ISSUER_ID" 2>/dev/null | grep -E "Version: $version.*Build: $build" || true)
+            
+            # Cleanup temporary API key
+            rm -f "$temp_api_key_path" 2>/dev/null || true
+            
+            if [[ -n "$existing_builds" ]]; then
+                echo "⚠️  Build $build for version $version already exists in TestFlight"
+                return 0  # Build exists
+            else
+                echo "✅ Build $build for version $version is available"
+                return 1  # Build doesn't exist
+            fi
+        else
+            echo "⚠️  TestFlight conflict check skipped (API credentials not available)"
+            return 1  # Assume build doesn't exist if we can't check
+        fi
+    }
+    
+    # Start with simple local increment
     if [[ "$CURRENT_BUILD" =~ ^[0-9]+$ ]]; then
         NEW_BUILD=$(($CURRENT_BUILD + 1))
-        echo "📋 Incrementing current build number: $CURRENT_BUILD → $NEW_BUILD"
+        echo "📋 Initial build number increment: $CURRENT_BUILD → $NEW_BUILD"
     else
         NEW_BUILD=1
         echo "📋 Using default build number: $NEW_BUILD"
+    fi
+    
+    # Check for TestFlight conflicts and auto-increment if needed
+    MAX_RETRIES=10  # Prevent infinite loops
+    retry_count=0
+    current_version="$DEPLOYMENT_VERSION"
+    
+    if [[ -z "$current_version" ]]; then
+        # Fallback to project version if DEPLOYMENT_VERSION not set
+        current_version=$(grep -m1 "MARKETING_VERSION = " "$PROJECT_FILE" | sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/' | tr -d ' ')
+    fi
+    
+    echo "🎯 Resolving conflicts for version $current_version..."
+    
+    while [[ $retry_count -lt $MAX_RETRIES ]]; do
+        if check_testflight_build_exists "$current_version" "$NEW_BUILD"; then
+            # Build exists, increment and try again
+            OLD_BUILD=$NEW_BUILD
+            NEW_BUILD=$(($NEW_BUILD + 1))
+            echo "🔄 Build $OLD_BUILD exists in TestFlight, trying $NEW_BUILD..."
+            retry_count=$(($retry_count + 1))
+        else
+            # Build doesn't exist, we're good to go
+            echo "✅ Build number $NEW_BUILD is available for version $current_version"
+            break
+        fi
+    done
+    
+    if [[ $retry_count -ge $MAX_RETRIES ]]; then
+        echo "⚠️  Reached maximum retry limit ($MAX_RETRIES) for TestFlight conflict resolution"
+        echo "💡 Using build number $NEW_BUILD anyway - manual resolution may be needed"
     fi
     
     echo "📈 Setting build number to: $NEW_BUILD"

@@ -31,7 +31,7 @@ class ParameterValidator
     api_issuer_id: ->(val) { val.match?(/^[a-f0-9\-]{36}$/) },
     scheme: ->(val) { val.is_a?(String) && !val.empty? },
     configuration: ->(val) { %w[Debug Release].include?(val) },
-    version_bump: ->(val) { %w[major minor patch auto sync].include?(val) }
+    version_bump: ->(val) { %w[major minor patch].include?(val) }
   }.freeze
   
   class << self
