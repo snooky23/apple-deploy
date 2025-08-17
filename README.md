@@ -11,13 +11,13 @@
 
 *Deploy iOS apps to TestFlight in under 1 minute with complete automation from certificates to processing verification*
 
-[![Version](https://img.shields.io/badge/Version-2.12.4-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.12.5-blue?style=for-the-badge)](#)
 [![Status](https://img.shields.io/badge/Status-✅_PRODUCTION_READY-success?style=for-the-badge)](#)
 [![Working](https://img.shields.io/badge/apple--deploy-✅_WORKING-brightgreen?style=for-the-badge)](#)
 [![TestFlight Verified](https://img.shields.io/badge/TestFlight-100%25_Success-purple?style=for-the-badge)](#)
 [![Multi-Team Support](https://img.shields.io/badge/Multi--Team-Support-orange?style=for-the-badge)](#)
 
-> **✅ v2.12.4 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
+> **✅ v2.12.5 STATUS: PRODUCTION READY** - Enterprise-grade iOS automation platform with automatic TestFlight conflict resolution and bulletproof certificate management.
 
 </div>
 
@@ -48,6 +48,29 @@
 - 🏗️ **Clean Architecture Foundation** - domain-driven design with 95%+ test coverage
 - 🔄 **Monolithic Stability** - proven reliability with comprehensive business logic
 - 🎯 **Apple API Integration** - clean abstraction layer for all Apple services
+
+---
+
+## 🚀 What's New in v2.12.5
+
+### 🔧 **Critical Fix: Version Mismatch Resolution**
+**PROBLEM SOLVED:** Deploy.sh updates versions correctly but Fastfile uses wrong version numbers, causing upload conflicts
+
+**FIXED ISSUES:**
+- ✅ **Version sync between deploy.sh and Fastfile** - both now read from same Xcode project source
+- ✅ **Eliminates "build already exists" false positives** - conflict resolution now uses correct version numbers
+- ✅ **Proper project file integration** - Fastfile reads MARKETING_VERSION and CURRENT_PROJECT_VERSION directly
+- ✅ **Enhanced logging** - shows exactly which version numbers are being used for upload
+
+**TECHNICAL DETAILS:**
+- **Root Cause**: Fastfile was using hardcoded fallback values (1.0.0, build 1) instead of reading updated project values
+- **Solution**: Direct project.pbxproj parsing in Fastfile to match deploy.sh behavior
+- **Result**: 100% version consistency between conflict detection and actual upload
+
+**How to Upgrade:**
+```bash
+brew upgrade apple-deploy
+```
 
 ---
 
@@ -105,7 +128,7 @@ brew upgrade apple-deploy
 
 ---
 
-## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.4!
+## 🚀 Quick Start (Under 3 Minutes) - ✅ PRODUCTION READY v2.12.5!
 
 ### Step 1: Install (30 seconds)
 ```bash
@@ -117,7 +140,7 @@ brew install apple-deploy
 brew upgrade apple-deploy
 ```
 
-> **🚀 NEW in v2.12.4:** Automatic TestFlight conflict resolution prevents "build already exists" errors! See [What's New](#-whats-new-in-v2124) for details.
+> **🔧 NEW in v2.12.5:** Critical version mismatch fix ensures automatic conflict resolution works perfectly! See [What's New](#-whats-new-in-v2125) for details.
 
 ### Step 2: Get Apple Credentials (2 minutes)
 1. Visit [App Store Connect API Keys](https://appstoreconnect.apple.com/access/api)
@@ -673,7 +696,7 @@ CI/CD environments and some developer machines reject certificates for code sign
 brew upgrade apple-deploy
 
 # Verify version
-apple-deploy version  # Should show v2.12.4+
+apple-deploy version  # Should show v2.12.5+
 ```
 
 **Note:** This fix is automatic and requires no configuration. It works silently during certificate setup.
